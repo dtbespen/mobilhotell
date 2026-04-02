@@ -4,14 +4,18 @@ import { router } from "expo-router";
 import { useAuth } from "@/lib/auth";
 import { useFamily } from "@/hooks/useFamily";
 import { PixelCard } from "@/components/ui/PixelCard";
-import { WizardAvatar } from "@/components/wizard/WizardAvatar";
+import { CharacterRenderer } from "@/components/wizard/CharacterRenderer";
 import type { AvatarConfig, CharacterClass } from "@/lib/database.types";
 
 const DEFAULT_AVATAR: AvatarConfig = {
   body_color: "blue",
+  hair_style: null,
+  hair_color: null,
   hat: null,
-  robe: null,
-  staff: null,
+  armor: null,
+  cape: null,
+  weapon: null,
+  shield: null,
   familiar: null,
 };
 
@@ -67,7 +71,7 @@ export default function GuildMasterScreen() {
                   : ""
               }`}
             >
-              <WizardAvatar
+              <CharacterRenderer
                 config={(member as any).avatar_config ?? DEFAULT_AVATAR}
                 characterClass={
                   ((member as any).character_class as CharacterClass) ?? "wizard"

@@ -5,20 +5,23 @@ export const DEFAULT_QUEST_TYPES = [
     points_per_minute: 1,
     icon: "smartphone-off",
     emoji: "\u{1F4F5}",
+    optimalMinutes: "45-120",
   },
   {
     name: "Lese bok",
     category: "reading" as const,
-    points_per_minute: 2,
+    points_per_minute: 1.5,
     icon: "book-open",
     emoji: "\u{1F4D6}",
+    optimalMinutes: "40-90",
   },
   {
     name: "Lydbok",
     category: "reading" as const,
-    points_per_minute: 2,
+    points_per_minute: 1.5,
     icon: "headphones",
     emoji: "\u{1F3A7}",
+    optimalMinutes: "40-90",
   },
   {
     name: "Lage ting",
@@ -26,19 +29,26 @@ export const DEFAULT_QUEST_TYPES = [
     points_per_minute: 2,
     icon: "palette",
     emoji: "\u{1F3A8}",
+    optimalMinutes: "60-150",
   },
   {
     name: "Mobilhotell",
     category: "screen_free" as const,
-    points_per_minute: 1.5,
+    points_per_minute: 1,
     icon: "hotel",
     emoji: "\u{1F3F0}",
+    optimalMinutes: "45-120",
   },
 ];
 
 /** @deprecated Use DEFAULT_QUEST_TYPES */
 export const DEFAULT_ACTIVITY_TYPES = DEFAULT_QUEST_TYPES;
 
+/**
+ * @deprecated Use calculateMana from lib/manaEngine.ts instead.
+ * This linear calculation was unfair (9h audiobook = 1080 mana).
+ * Kept for backward compatibility with old activity records.
+ */
 export function calculatePoints(
   durationMinutes: number,
   pointsPerMinute: number

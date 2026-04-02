@@ -34,7 +34,7 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontFamily: "PressStart2P",
-          fontSize: 8,
+          fontSize: 7,
         },
       }}
     >
@@ -57,11 +57,47 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="season"
+        options={{
+          title: "Season",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="\u{2744}\u{FE0F}" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="dungeon"
         options={{
           title: "Dungeon",
           tabBarIcon: ({ focused }) => (
             <TabIcon emoji="\u{1F409}" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="skills"
+        options={{
+          title: "Skills",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="\u{2728}" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="rewards"
+        options={{
+          title: "Rewards",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji={"\u2B50"} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Helt",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="\u{2694}\u{FE0F}" focused={focused} />
           ),
         }}
       />
@@ -75,12 +111,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="demo"
         options={{
-          title: "Helt",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="\u{2694}\u{FE0F}" focused={focused} />
-          ),
+          href: null,
         }}
       />
     </Tabs>
@@ -89,6 +122,6 @@ export default function TabLayout() {
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
   return (
-    <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.35 }}>{emoji}</Text>
+    <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.35 }}>{emoji}</Text>
   );
 }

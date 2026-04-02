@@ -12,8 +12,7 @@ import { useFamily } from "@/hooks/useFamily";
 import { supabase } from "@/lib/supabase";
 import { Brand } from "@/constants/Colors";
 import { PixelCard } from "@/components/ui/PixelCard";
-import { WizardAvatar } from "@/components/wizard/WizardAvatar";
-import { ClassIcon } from "@/components/ui/ClassIcon";
+import { CharacterRenderer } from "@/components/wizard/CharacterRenderer";
 import type { AvatarConfig, CharacterClass } from "@/lib/database.types";
 
 type LeaderboardEntry = {
@@ -28,9 +27,13 @@ type LeaderboardEntry = {
 
 const DEFAULT_AVATAR: AvatarConfig = {
   body_color: "blue",
+  hair_style: null,
+  hair_color: null,
   hat: null,
-  robe: null,
-  staff: null,
+  armor: null,
+  cape: null,
+  weapon: null,
+  shield: null,
   familiar: null,
 };
 
@@ -215,7 +218,7 @@ export default function GuildHallScreen() {
                     {index < 3 ? MEDALS[index] : `${index + 1}.`}
                   </Text>
                   <View className="mx-2">
-                    <WizardAvatar
+                    <CharacterRenderer
                       config={entry.avatar_config}
                       characterClass={entry.character_class}
                       size="sm"
@@ -267,7 +270,7 @@ function PodiumSpot({
   return (
     <View className="flex-1 items-center">
       <Text className="text-2xl mb-1">{medal}</Text>
-      <WizardAvatar
+      <CharacterRenderer
         config={entry.avatar_config}
         characterClass={entry.character_class}
         size="sm"

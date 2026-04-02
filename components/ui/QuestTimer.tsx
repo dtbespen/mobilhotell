@@ -1,9 +1,12 @@
 import { View, Text } from "react-native";
+import { estimateMana, getCategoryConfig } from "@/lib/manaEngine";
+import type { ActivityCategory } from "@/lib/database.types";
 
 interface QuestTimerProps {
   elapsed: number;
   pointsPerMinute: number;
   isActive: boolean;
+  category?: ActivityCategory;
 }
 
 function formatTime(seconds: number): string {
@@ -18,10 +21,15 @@ function formatTime(seconds: number): string {
 
 export function QuestTimer({
   elapsed,
-  pointsPerMinute,
   isActive,
+  category = "screen_free",
 }: QuestTimerProps) {
-  const earnedMana = Math.floor((elapsed / 60) * pointsPerMinute);
+  const minutes = Math.round(elapsed / 60);
+  const earnedMana = estimateMana(minutes, category);
+  const config = getCategoryConfig(category);
+
+  const isPastSweet = minutes > config.sweetSpotMinutes;
+  const isPastMax = minutes > config.maxEffectiveMinutes;
 
   return (
     <View className="items-center py-6">
@@ -34,11 +42,23 @@ export function QuestTimer({
       </Text>
 
       {isActive && (
-        <View className="flex-row items-center mt-3 bg-accent-500/10 border border-accent-500/20 rounded-md px-3 py-1.5">
-          <Text className="font-pixel text-xs text-accent-400">
-            +{earnedMana} Mana
-          </Text>
-        </View>
+        <>
+          <View className="flex-row items-center mt-3 bg-accent-500/10 border border-accent-500/20 rounded-md px-3 py-1.5">
+            <Text className="font-pixel text-xs text-accent-400">
+              +{earnedMana} Mana
+            </Text>
+          </View>
+
+          {isPastMax ? (
+            <Text className="text-[10px] text-danger-400 mt-2">
+              {"\uD83D\uDCA1"} Du far veldig lite ekstra mana na. Prøv noe annet!
+            </Text>
+          ) : isPastSweet ? (
+            <Text className="text-[10px] text-accent-400/60 mt-2">
+              Mana-raten avtar. Sweet spot: {config.sweetSpotMinutes} min
+            </Text>
+          ) : null}
+        </>
       )}
     </View>
   );

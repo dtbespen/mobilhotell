@@ -1,16 +1,21 @@
-import { View, Text, ScrollView, RefreshControl } from "react-native";
-import { useState, useCallback } from "react";
+import { View, Text, ScrollView, RefreshControl, TouchableOpacity } from "react-native";
+import { useState, useCallback, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import { useAuth } from "@/lib/auth";
 import { usePoints } from "@/hooks/usePoints";
 import { useActivities } from "@/hooks/useActivities";
 import { formatDuration } from "@/lib/points";
-import { getLevel, getManaForNextLevel, getWizardRank, CLASS_CONFIG } from "@/lib/wizard";
+import { getLevel, getManaForNextLevel, getWizardRank, CLASS_CONFIG, getUnlocksForLevel } from "@/lib/wizard";
+import { getLoginReward } from "@/lib/dailyLogin";
+import { buildSeasonTiers, getTierForXp } from "@/lib/seasonPass";
+import { getStreakFlameEmoji, isManaCapped, DAILY_MANA_CAP } from "@/lib/streakManager";
+import { useGuildStars } from "@/hooks/useGuildStars";
 import { Brand } from "@/constants/Colors";
 import { PixelCard } from "@/components/ui/PixelCard";
 import { ManaBar } from "@/components/ui/ManaBar";
 import { StatBadge } from "@/components/ui/StatBadge";
-import { WizardAvatar } from "@/components/wizard/WizardAvatar";
+import { CharacterRenderer } from "@/components/wizard/CharacterRenderer";
 import type { CharacterClass, AvatarConfig } from "@/lib/database.types";
 
 function getGreeting(): string {
@@ -22,9 +27,13 @@ function getGreeting(): string {
 
 const DEFAULT_AVATAR: AvatarConfig = {
   body_color: "blue",
+  hair_style: null,
+  hair_color: null,
   hat: null,
-  robe: null,
-  staff: null,
+  armor: null,
+  cape: null,
+  weapon: null,
+  shield: null,
   familiar: null,
 };
 
@@ -32,6 +41,7 @@ export default function WizardTowerScreen() {
   const { profile, family } = useAuth();
   const points = usePoints();
   const { activities, activeActivity } = useActivities();
+  const { currentStars } = useGuildStars();
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -45,13 +55,19 @@ export default function WizardTowerScreen() {
   const level = getLevel(points.total);
   const rank = getWizardRank(level);
   const nextLevelMana = getManaForNextLevel(level);
-  const currentLevelMana = points.total;
+  const unlocks = getUnlocksForLevel(level);
 
   const characterClass: CharacterClass =
     (profile as any)?.character_class ?? "wizard";
   const avatarConfig: AvatarConfig =
     (profile as any)?.avatar_config ?? DEFAULT_AVATAR;
   const classInfo = CLASS_CONFIG[characterClass];
+
+  const loginStreak = (profile as any)?.login_streak ?? points.streak;
+  const loginReward = getLoginReward(loginStreak || 1);
+
+  const seasonTiers = useMemo(() => buildSeasonTiers(), []);
+  const seasonTier = getTierForXp(0, seasonTiers);
 
   return (
     <SafeAreaView className="flex-1 bg-dark-300">
@@ -67,7 +83,7 @@ export default function WizardTowerScreen() {
       >
         <View className="px-6 pt-4 pb-2">
           <Text className="text-sm text-white/30">
-            {family?.name ? `\u{1F6E1}\u{FE0F} ${family.name}` : ""}
+            {family?.name ? `\uD83D\uDEE1\uFE0F ${family.name}` : ""}
           </Text>
           <Text className="text-lg text-white mt-0.5">
             {getGreeting()},{" "}
@@ -75,11 +91,12 @@ export default function WizardTowerScreen() {
           </Text>
         </View>
 
-        {/* Hero: Avatar + Rank */}
-        <View className="items-center py-6">
-          <WizardAvatar
+        {/* Hero: Character + Rank */}
+        <View className="items-center py-4">
+          <CharacterRenderer
             config={avatarConfig}
             characterClass={characterClass}
+            level={level}
             size="xl"
           />
           <Text className="font-pixel text-sm text-accent-400 mt-3">
@@ -93,58 +110,131 @@ export default function WizardTowerScreen() {
         {/* Mana card */}
         <PixelCard variant="glow" className="mx-6">
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="font-pixel text-xs text-accent-400/70">
-              Mana
-            </Text>
+            <Text className="font-pixel text-xs text-accent-400/70">Mana</Text>
             <Text className="font-pixel text-2xl text-accent-400">
               {points.total}
             </Text>
           </View>
-          <ManaBar current={currentLevelMana} max={nextLevelMana} size="md" />
+          <ManaBar current={points.total} max={nextLevelMana} size="md" />
           <Text className="text-[11px] text-white/25 mt-2">
-            {Math.max(0, nextLevelMana - currentLevelMana)} til level{" "}
-            {level + 1}
+            {Math.max(0, nextLevelMana - points.total)} til level {level + 1}
           </Text>
         </PixelCard>
 
+        {/* Level unlocks */}
+        {unlocks.length > 0 && (
+          <PixelCard className="mx-6 mt-3 border-accent-500/30">
+            <Text className="font-pixel text-[9px] text-accent-400 mb-2">
+              {"\uD83C\uDF1F"} Ulast pa level {level}:
+            </Text>
+            {unlocks.map((u) => (
+              <Text key={u.slug} className="text-xs text-white/50 mb-0.5">
+                {u.type === "rank" ? "\uD83D\uDC51" : u.type === "ability" ? "\uD83E\uDE84" : "\uD83C\uDFC6"}{" "}
+                {u.name}
+              </Text>
+            ))}
+          </PixelCard>
+        )}
+
+        {/* Daily login reward */}
+        <PixelCard className="mx-6 mt-3">
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center">
+              <Text className="text-lg mr-2">{"\uD83C\uDF81"}</Text>
+              <View>
+                <Text className="font-pixel text-[9px] text-primary-400">
+                  Daglig belonning
+                </Text>
+                <Text className="text-xs text-white/30">
+                  Dag {loginStreak || 1}: +{loginReward.mana} mana
+                  {loginReward.bonusType === "item" ? ` + ${loginReward.bonusLabel}` : ""}
+                </Text>
+              </View>
+            </View>
+            <View className="bg-primary-500/20 border border-primary-500/30 rounded-lg px-3 py-1.5">
+              <Text className="font-pixel text-[8px] text-primary-400">Hent</Text>
+            </View>
+          </View>
+        </PixelCard>
+
+        {/* Season progress mini */}
+        <TouchableOpacity onPress={() => router.push("/(tabs)/season")} activeOpacity={0.7}>
+          <PixelCard className="mx-6 mt-3">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <Text className="text-lg mr-2">{"\u2744\uFE0F"}</Text>
+                <View>
+                  <Text className="font-pixel text-[9px] text-info-400">
+                    Frostmagiernes Vinter
+                  </Text>
+                  <Text className="text-xs text-white/30">
+                    Tier {seasonTier} / 30
+                  </Text>
+                </View>
+              </View>
+              <Text className="text-white/20">{"\u2192"}</Text>
+            </View>
+          </PixelCard>
+        </TouchableOpacity>
+
         {/* Active quest */}
         {activeActivity && (
-          <PixelCard className="mx-6 mt-4 border-primary-500/30">
+          <PixelCard className="mx-6 mt-3 border-primary-500/30">
             <View className="flex-row items-center gap-2">
               <View className="h-2.5 w-2.5 rounded-full bg-primary-400" />
-              <Text className="font-pixel text-xs text-primary-400">
-                Quest aktiv
-              </Text>
+              <Text className="font-pixel text-xs text-primary-400">Quest aktiv</Text>
             </View>
             <Text className="mt-1 text-base font-bold text-white">
               {activeActivity.activity_type?.name ?? "Quest"}
             </Text>
             <Text className="mt-1 text-sm text-white/30">
-              Mana stroemmer inn...
+              Mana strommer inn...
             </Text>
           </PixelCard>
         )}
 
+        {/* Mana cap warning */}
+        {isManaCapped(points.today) && (
+          <PixelCard variant="glow" className="mx-6 mt-3 items-center py-4 border-accent-500/40">
+            <Text className="text-3xl mb-1">{"\uD83C\uDF89"}</Text>
+            <Text className="font-pixel text-xs text-accent-400">
+              Dagens mana-grense nadd!
+            </Text>
+            <Text className="text-xs text-white/30 mt-1">
+              {DAILY_MANA_CAP} mana - Kom tilbake i morgen!
+            </Text>
+          </PixelCard>
+        )}
+
+        {/* Guild Stars shortcut */}
+        <TouchableOpacity
+          onPress={() => router.push("/(tabs)/rewards")}
+          activeOpacity={0.7}
+        >
+          <PixelCard className="mx-6 mt-3">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <Text className="text-lg mr-2">{"\u2B50"}</Text>
+                <View>
+                  <Text className="font-pixel text-[9px] text-accent-400">
+                    Guild Stars
+                  </Text>
+                  <Text className="text-xs text-white/30">
+                    {currentStars} stjerner - se belonninger!
+                  </Text>
+                </View>
+              </View>
+              <Text className="text-white/20">{"\u2192"}</Text>
+            </View>
+          </PixelCard>
+        </TouchableOpacity>
+
         {/* Stats */}
-        <View className="mt-5 flex-row gap-3 px-6">
-          <StatBadge
-            icon={"\u26A1"}
-            value={points.today}
-            label="I dag"
-            color="primary"
-          />
-          <StatBadge
-            icon={"\u{1F4C5}"}
-            value={points.thisWeek}
-            label="Uka"
-            color="info"
-          />
-          <StatBadge
-            icon={"\u{1F525}"}
-            value={points.streak}
-            label="Streak"
-            color="danger"
-          />
+        <View className="mt-4 flex-row gap-3 px-6 flex-wrap">
+          <StatBadge icon={"\u26A1"} value={`${points.today}/${DAILY_MANA_CAP}`} label="I dag" color="primary" />
+          <StatBadge icon={"\uD83D\uDCC5"} value={points.thisWeek} label="Uka" color="info" />
+          <StatBadge icon={getStreakFlameEmoji(points.streak)} value={points.streak} label="Streak" color="danger" />
+          <StatBadge icon={"\u2B50"} value={currentStars} label="Stars" color="accent" />
         </View>
 
         {/* Recent quests */}
@@ -154,12 +244,12 @@ export default function WizardTowerScreen() {
           </Text>
           {recentActivities.length === 0 ? (
             <PixelCard className="items-center py-8">
-              <Text className="text-4xl mb-2">{"\u{1F3AF}"}</Text>
+              <Text className="text-4xl mb-2">{"\uD83C\uDFAF"}</Text>
               <Text className="font-pixel text-xs text-white/50">
-                Ingen quests enn\u00e5!
+                Ingen quests enna!
               </Text>
               <Text className="text-sm text-white/20 mt-1">
-                Legg bort telefonen og start din f\u00f8rste quest
+                Legg bort telefonen og start din forste quest
               </Text>
             </PixelCard>
           ) : (

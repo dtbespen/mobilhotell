@@ -3,10 +3,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useDungeon } from "@/hooks/useDungeon";
 import { useAuth } from "@/lib/auth";
 import { usePoints } from "@/hooks/usePoints";
+import { useGuildStars } from "@/hooks/useGuildStars";
 import { CLASS_CONFIG } from "@/lib/wizard";
+import {
+  calculateDungeonStars,
+  distributeDungeonStars,
+  shouldUnlockBonusDungeon,
+} from "@/lib/guildStars";
 import { PixelCard } from "@/components/ui/PixelCard";
 import { HPBar } from "@/components/ui/HPBar";
-import { WizardAvatar } from "@/components/wizard/WizardAvatar";
+import { CharacterRenderer } from "@/components/wizard/CharacterRenderer";
+import { RarityBorder } from "@/components/ui/RarityBorder";
 import type { CharacterClass, AvatarConfig } from "@/lib/database.types";
 
 const BOSS_EMOJI: Record<string, string> = {
@@ -18,9 +25,13 @@ const BOSS_EMOJI: Record<string, string> = {
 
 const DEFAULT_AVATAR: AvatarConfig = {
   body_color: "blue",
+  hair_style: null,
+  hair_color: null,
   hat: null,
-  robe: null,
-  staff: null,
+  armor: null,
+  cape: null,
+  weapon: null,
+  shield: null,
   familiar: null,
 };
 
@@ -38,15 +49,26 @@ export default function DungeonScreen() {
     isLoading,
     contributeMana,
   } = useDungeon();
+  const { currentStars, totalEarned } = useGuildStars();
 
   const characterClass: CharacterClass =
     (profile as any)?.character_class ?? "wizard";
   const classInfo = CLASS_CONFIG[characterClass];
 
+  const uniqueContributors = new Set(contributions.map((c) => c.profile_id)).size;
+
+  const starsForVictory = dungeon
+    ? calculateDungeonStars(dungeon.difficulty, daysRemaining, uniqueContributors)
+    : 0;
+
+  const bonusDungeonPossible = dungeon
+    ? shouldUnlockBonusDungeon(dungeon.boss_hp, totalDamage, 7 - daysRemaining, 7)
+    : false;
+
   async function handleContribute() {
     const manaToUse = Math.min(50, points.total);
     if (manaToUse <= 0) {
-      Alert.alert("Ikke nok mana!", "Fullf\u00f8r quests for \u00e5 samle mana.");
+      Alert.alert("Ikke nok mana!", "Fullfoor quests for aa samle mana.");
       return;
     }
 
@@ -80,8 +102,7 @@ export default function DungeonScreen() {
     );
   }
 
-  const bossEmoji =
-    BOSS_EMOJI[dungeon.boss_pixel_asset] ?? "\u{1F47E}";
+  const bossEmoji = BOSS_EMOJI[dungeon.boss_pixel_asset] ?? "\u{1F47E}";
 
   return (
     <SafeAreaView className="flex-1 bg-dark-300">
@@ -93,6 +114,15 @@ export default function DungeonScreen() {
           <Text className="text-center text-white/30 text-xs mt-1">
             {dungeon.name}
           </Text>
+        </View>
+
+        {/* Guild Stars mini-display */}
+        <View className="flex-row justify-center mt-2">
+          <View className="bg-accent-500/15 rounded-lg px-4 py-1.5 flex-row items-center">
+            <Text className="font-pixel text-xs text-accent-400">
+              {"\u2B50"} {currentStars} Guild Stars
+            </Text>
+          </View>
         </View>
 
         {/* Boss */}
@@ -107,16 +137,47 @@ export default function DungeonScreen() {
           </Text>
           <Text className="text-xs text-white/30 mb-3">
             {dungeon.difficulty.toUpperCase()}
+            {(dungeon as any).is_bonus ? " (BONUS)" : ""}
           </Text>
 
           {bossDefeated ? (
-            <View className="items-center py-4">
+            <View className="items-center py-4 w-full">
               <Text className="font-pixel text-lg text-accent-400">
                 BOSS BESEIRET!
               </Text>
-              <Text className="text-white/40 mt-1">
-                Sjekk din loot-kiste!
-              </Text>
+
+              {/* Star payout */}
+              <RarityBorder rarity="legendary" className="w-full mt-4">
+                <PixelCard variant="glow" className="items-center">
+                  <Text className="text-3xl">{"\u2B50"}</Text>
+                  <Text className="font-pixel text-xl text-accent-400 mt-2">
+                    +{starsForVictory} Guild Stars
+                  </Text>
+                  <Text className="text-xs text-white/30 mt-1">
+                    Delt mellom {uniqueContributors} helter
+                  </Text>
+                  {bonusDungeonPossible && (
+                    <View className="mt-3 bg-info-500/15 border border-info-500/30 rounded-lg px-4 py-2">
+                      <Text className="font-pixel text-[9px] text-info-400 text-center">
+                        {"\uD83C\uDF1F"} Bonus-dungeon laast opp!
+                      </Text>
+                      <Text className="text-[10px] text-white/30 text-center mt-0.5">
+                        Tappre helter far en vanskeligere boss
+                      </Text>
+                    </View>
+                  )}
+                </PixelCard>
+              </RarityBorder>
+
+              {/* Loot preview */}
+              <PixelCard className="w-full mt-3 items-center">
+                <Text className="font-pixel text-[10px] text-white/30 uppercase tracking-wider mb-2">
+                  Loot
+                </Text>
+                <Text className="text-white/40 text-xs">
+                  Sjekk din loot i Wardrobe!
+                </Text>
+              </PixelCard>
             </View>
           ) : (
             <>
@@ -124,6 +185,13 @@ export default function DungeonScreen() {
               <Text className="text-xs text-white/25 mt-2">
                 {daysRemaining}d igjen
               </Text>
+
+              {/* Reward preview */}
+              <View className="mt-3 bg-accent-500/10 border border-accent-500/20 rounded-lg px-4 py-2 w-full">
+                <Text className="font-pixel text-[9px] text-accent-400 text-center">
+                  {"\u2B50"} Seier gir {starsForVictory} Guild Stars
+                </Text>
+              </View>
             </>
           )}
         </PixelCard>
@@ -139,6 +207,12 @@ export default function DungeonScreen() {
                 <Text className="text-white/50 text-xs">Din damage</Text>
                 <Text className="font-pixel text-lg text-danger-400">
                   {myDamage}
+                </Text>
+              </View>
+              <View className="items-center">
+                <Text className="text-white/50 text-xs">Bidragsytere</Text>
+                <Text className="font-pixel text-lg text-info-400">
+                  {uniqueContributors}
                 </Text>
               </View>
               <View className="items-end">
@@ -160,9 +234,43 @@ export default function DungeonScreen() {
             </TouchableOpacity>
             <Text className="text-[10px] text-white/20 text-center mt-2">
               {classInfo.damageMult}x {classInfo.nameNorwegian} damage
+              {" \u2022 "} Alle i familien bidrar!
             </Text>
           </PixelCard>
         )}
+
+        {/* Pipeline reminder */}
+        <PixelCard className="mx-5 mt-4">
+          <Text className="font-pixel text-[9px] text-white/25 uppercase tracking-wider mb-2">
+            Belonningspipeline
+          </Text>
+          <View className="flex-row items-center justify-between">
+            <View className="items-center flex-1">
+              <Text className="text-lg">{"\uD83D\uDCDC"}</Text>
+              <Text className="text-[8px] text-white/30">Quests</Text>
+            </View>
+            <Text className="text-white/15">{"\u2192"}</Text>
+            <View className="items-center flex-1">
+              <Text className="text-lg">{"\u26A1"}</Text>
+              <Text className="text-[8px] text-white/30">Mana</Text>
+            </View>
+            <Text className="text-white/15">{"\u2192"}</Text>
+            <View className="items-center flex-1">
+              <Text className="text-lg">{"\uD83D\uDC09"}</Text>
+              <Text className="text-[8px] text-white/30">Dungeon</Text>
+            </View>
+            <Text className="text-white/15">{"\u2192"}</Text>
+            <View className="items-center flex-1">
+              <Text className="text-lg">{"\u2B50"}</Text>
+              <Text className="text-[8px] text-accent-400">Stars</Text>
+            </View>
+            <Text className="text-white/15">{"\u2192"}</Text>
+            <View className="items-center flex-1">
+              <Text className="text-lg">{"\uD83C\uDF81"}</Text>
+              <Text className="text-[8px] text-accent-400">Rewards</Text>
+            </View>
+          </View>
+        </PixelCard>
 
         {/* Recent contributions */}
         <View className="mt-5 px-5 pb-10">
@@ -172,7 +280,7 @@ export default function DungeonScreen() {
           {contributions.length === 0 ? (
             <PixelCard className="items-center py-6">
               <Text className="text-white/30 text-sm">
-                Ingen har angrepet enn\u00e5. V\u00e6r den f\u00f8rste!
+                Ingen har angrepet ennaa. Vaer den forste!
               </Text>
             </PixelCard>
           ) : (
@@ -182,7 +290,7 @@ export default function DungeonScreen() {
                   key={c.id}
                   className="flex-row items-center py-2.5"
                 >
-                  <WizardAvatar
+                  <CharacterRenderer
                     config={DEFAULT_AVATAR}
                     characterClass={characterClass}
                     size="sm"

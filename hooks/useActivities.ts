@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
-import { calculatePoints } from "@/lib/points";
-import type { Activity, ActivityType } from "@/lib/database.types";
+import { calculateMana, type ManaBreakdown, type SessionContext } from "@/lib/manaEngine";
+import type { Activity, ActivityType, ActivityCategory } from "@/lib/database.types";
 
 export function useActivities() {
   const { profile, family } = useAuth();
@@ -87,23 +87,34 @@ export function useActivities() {
     const durationMinutes = Math.round(
       (endedAt.getTime() - startedAt.getTime()) / 60000
     );
-    const pointsPerMinute =
-      activeActivity.activity_type?.points_per_minute ?? 1;
-    const pointsEarned = calculatePoints(durationMinutes, pointsPerMinute);
+
+    const todaySessions = getTodaySessions(activities, activeActivity.id);
+    const category: ActivityCategory = activeActivity.activity_type?.category ?? "screen_free";
+    const breakdown = calculateMana({
+      durationMinutes,
+      category,
+      todaySessions,
+      currentStreak: 0,
+      equipmentManaBonus: 0,
+    });
 
     const { error } = await supabase
       .from("activities")
       .update({
         ended_at: endedAt.toISOString(),
         duration_minutes: durationMinutes,
-        points_earned: pointsEarned,
+        points_earned: breakdown.totalMana,
+        metadata: {
+          mana_breakdown: breakdown,
+          engine_version: 2,
+        },
       })
       .eq("id", activeActivity.id);
 
     if (error) return { error: new Error(error.message) };
     setActiveActivity(null);
     await fetchActivities();
-    return { error: null, pointsEarned };
+    return { error: null, pointsEarned: breakdown.totalMana, breakdown };
   }
 
   async function logManualActivity(
@@ -112,10 +123,15 @@ export function useActivities() {
   ) {
     if (!profile) return { error: new Error("Ingen profil") };
 
-    const pointsEarned = calculatePoints(
+    const todaySessions = getTodaySessions(activities);
+    const breakdown = calculateMana({
       durationMinutes,
-      activityType.points_per_minute
-    );
+      category: activityType.category,
+      todaySessions,
+      currentStreak: 0,
+      equipmentManaBonus: 0,
+    });
+
     const now = new Date();
     const startedAt = new Date(now.getTime() - durationMinutes * 60000);
 
@@ -125,13 +141,17 @@ export function useActivities() {
       started_at: startedAt.toISOString(),
       ended_at: now.toISOString(),
       duration_minutes: durationMinutes,
-      points_earned: pointsEarned,
+      points_earned: breakdown.totalMana,
       source: "manual",
+      metadata: {
+        mana_breakdown: breakdown,
+        engine_version: 2,
+      },
     });
 
     if (error) return { error: new Error(error.message) };
     await fetchActivities();
-    return { error: null, pointsEarned };
+    return { error: null, pointsEarned: breakdown.totalMana, breakdown };
   }
 
   return {
@@ -143,4 +163,23 @@ export function useActivities() {
     logManualActivity,
     refresh: fetchActivities,
   };
+}
+
+function getTodaySessions(
+  activities: Activity[],
+  excludeId?: string
+): Array<{ category: ActivityCategory; durationMinutes: number }> {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  return activities
+    .filter((a) => {
+      if (!a.ended_at) return false;
+      if (a.id === excludeId) return false;
+      return new Date(a.started_at) >= todayStart;
+    })
+    .map((a) => ({
+      category: (a.activity_type?.category ?? "screen_free") as ActivityCategory,
+      durationMinutes: a.duration_minutes,
+    }));
 }

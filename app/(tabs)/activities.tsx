@@ -11,7 +11,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useActivities } from "@/hooks/useActivities";
 import { useActivityTypes } from "@/hooks/useActivityTypes";
-import type { ActivityType } from "@/lib/database.types";
+import { estimateMana, getOptimalSessionLabel } from "@/lib/manaEngine";
+import { ManaBreakdownCard } from "@/components/ui/ManaBreakdown";
+import type { ActivityType, ActivityCategory } from "@/lib/database.types";
+import type { ManaBreakdown } from "@/lib/manaEngine";
 import { PixelCard } from "@/components/ui/PixelCard";
 import { QuestTimer } from "@/components/ui/QuestTimer";
 
@@ -53,14 +56,21 @@ export default function QuestBoardScreen() {
     if (error) Alert.alert("Feil", error.message);
   }
 
+  const [lastBreakdown, setLastBreakdown] = useState<ManaBreakdown | null>(null);
+
   async function handleStop() {
     const result = await stopActivity();
     if (result.error) {
       Alert.alert("Feil", result.error.message);
     } else {
+      const bd = (result as any).breakdown as ManaBreakdown | undefined;
+      if (bd) setLastBreakdown(bd);
+
+      const warnings = bd?.warnings ?? [];
+      const tip = warnings.length > 0 ? `\n\n\uD83D\uDCA1 ${warnings[0]}` : "";
       Alert.alert(
-        "Quest fullf\u00f8rt! \u2728",
-        `+${result.pointsEarned} Mana! Magien din vokser.`
+        "Quest fullfort! \u2728",
+        `+${result.pointsEarned} Mana!${tip}`
       );
     }
   }
@@ -86,9 +96,12 @@ export default function QuestBoardScreen() {
     setManualMinutes("");
   }
 
-  const currentMana = Math.round(
-    (elapsed / 60) * (activeActivity?.activity_type?.points_per_minute ?? 1)
-  );
+  const currentMana = activeActivity
+    ? estimateMana(
+        Math.round(elapsed / 60),
+        (activeActivity.activity_type?.category ?? "screen_free") as ActivityCategory
+      )
+    : 0;
 
   return (
     <SafeAreaView className="flex-1 bg-dark-300">
@@ -112,6 +125,7 @@ export default function QuestBoardScreen() {
                 activeActivity.activity_type?.points_per_minute ?? 1
               }
               isActive={true}
+              category={(activeActivity.activity_type?.category ?? "screen_free") as ActivityCategory}
             />
 
             <TouchableOpacity
@@ -146,32 +160,35 @@ export default function QuestBoardScreen() {
                 Start Quest
               </Text>
               <View className="gap-3">
-                {activityTypes.map((type) => (
-                  <TouchableOpacity
-                    key={type.id}
-                    onPress={() => handleStart(type)}
-                    activeOpacity={0.7}
-                  >
-                    <PixelCard className="flex-row items-center">
-                      <Text className="text-2xl mr-4">
-                        {CATEGORY_EMOJI[type.category] ?? "\u2B50"}
-                      </Text>
-                      <View className="flex-1">
-                        <Text className="text-base font-bold text-white">
-                          {type.name}
+                {activityTypes.map((type) => {
+                  const optLabel = getOptimalSessionLabel(type.category as ActivityCategory);
+                  return (
+                    <TouchableOpacity
+                      key={type.id}
+                      onPress={() => handleStart(type)}
+                      activeOpacity={0.7}
+                    >
+                      <PixelCard className="flex-row items-center">
+                        <Text className="text-2xl mr-4">
+                          {CATEGORY_EMOJI[type.category] ?? "\u2B50"}
                         </Text>
-                        <Text className="text-sm text-accent-400">
-                          {type.points_per_minute} Mana/min
-                        </Text>
-                      </View>
-                      <View className="rounded-md bg-primary-500/15 px-4 py-2 border border-primary-500/20">
-                        <Text className="font-pixel text-xs text-primary-400">
-                          Go!
-                        </Text>
-                      </View>
-                    </PixelCard>
-                  </TouchableOpacity>
-                ))}
+                        <View className="flex-1">
+                          <Text className="text-base font-bold text-white">
+                            {type.name}
+                          </Text>
+                          <Text className="text-xs text-white/30">
+                            Best: {optLabel}
+                          </Text>
+                        </View>
+                        <View className="rounded-md bg-primary-500/15 px-4 py-2 border border-primary-500/20">
+                          <Text className="font-pixel text-xs text-primary-400">
+                            Go!
+                          </Text>
+                        </View>
+                      </PixelCard>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
 
@@ -180,31 +197,34 @@ export default function QuestBoardScreen() {
                 Logg quest i etterkant
               </Text>
               <View className="gap-3">
-                {activityTypes.map((type) => (
-                  <TouchableOpacity
-                    key={type.id}
-                    onPress={() => {
-                      setSelectedType(type);
-                      setShowManual(true);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <PixelCard className="flex-row items-center py-3">
-                      <Text className="text-xl mr-3">
-                        {CATEGORY_EMOJI[type.category] ?? "\u2B50"}
-                      </Text>
-                      <View className="flex-1">
-                        <Text className="font-semibold text-white">
-                          {type.name}
+                {activityTypes.map((type) => {
+                  const optLabel = getOptimalSessionLabel(type.category as ActivityCategory);
+                  return (
+                    <TouchableOpacity
+                      key={type.id}
+                      onPress={() => {
+                        setSelectedType(type);
+                        setShowManual(true);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <PixelCard className="flex-row items-center py-3">
+                        <Text className="text-xl mr-3">
+                          {CATEGORY_EMOJI[type.category] ?? "\u2B50"}
                         </Text>
-                        <Text className="text-xs text-white/20">
-                          {type.points_per_minute} Mana/min
-                        </Text>
-                      </View>
-                      <Text className="text-sm text-white/25">+ Logg</Text>
-                    </PixelCard>
-                  </TouchableOpacity>
-                ))}
+                        <View className="flex-1">
+                          <Text className="font-semibold text-white">
+                            {type.name}
+                          </Text>
+                          <Text className="text-xs text-white/20">
+                            Best: {optLabel}
+                          </Text>
+                        </View>
+                        <Text className="text-sm text-white/25">+ Logg</Text>
+                      </PixelCard>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           </>
@@ -237,16 +257,24 @@ export default function QuestBoardScreen() {
             />
             {manualMinutes && selectedType && (
               <View className="mt-3 items-center">
-                <View className="rounded-md bg-accent-500/15 border border-accent-500/20 px-4 py-2">
-                  <Text className="font-pixel text-xs text-accent-400">
-                    ={" "}
-                    {Math.round(
-                      parseInt(manualMinutes, 10) *
-                        selectedType.points_per_minute
-                    )}{" "}
-                    Mana
-                  </Text>
-                </View>
+                {(() => {
+                  const mins = parseInt(manualMinutes, 10);
+                  if (isNaN(mins) || mins <= 0) return null;
+                  const estimated = estimateMana(mins, selectedType.category as ActivityCategory);
+                  const optLabel = getOptimalSessionLabel(selectedType.category as ActivityCategory);
+                  return (
+                    <>
+                      <View className="rounded-md bg-accent-500/15 border border-accent-500/20 px-4 py-2">
+                        <Text className="font-pixel text-xs text-accent-400">
+                          {"\u2248"} {estimated} Mana
+                        </Text>
+                      </View>
+                      <Text className="text-[10px] text-white/20 mt-1">
+                        Optimal tid: {optLabel}
+                      </Text>
+                    </>
+                  );
+                })()}
               </View>
             )}
             <View className="mt-6 flex-row gap-3">

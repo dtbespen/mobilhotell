@@ -1,124 +1,161 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { useState } from "react";
-import { WizardAvatar } from "./WizardAvatar";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { CharacterRenderer } from "./CharacterRenderer";
 import { PixelCard } from "@/components/ui/PixelCard";
-import { RarityBorder } from "@/components/ui/RarityBorder";
-import type { AvatarConfig, AvatarItem, CharacterClass, ItemType } from "@/lib/database.types";
+import { BODY_COLORS, HAIR_STYLES, HAIR_COLORS } from "@/lib/spriteResolver";
+import { CLASS_CONFIG } from "@/lib/wizard";
+import type { AvatarConfig, CharacterClass } from "@/lib/database.types";
 
 interface AvatarEditorProps {
-  currentConfig: AvatarConfig;
+  config: AvatarConfig;
   characterClass: CharacterClass;
-  items: AvatarItem[];
   level: number;
-  onSave: (config: AvatarConfig) => void;
+  onChange: (config: Partial<AvatarConfig>) => void;
 }
 
-const ITEM_CATEGORIES: { type: ItemType; label: string; emoji: string }[] = [
-  { type: "body_color", label: "Farge", emoji: "\u{1F3A8}" },
-  { type: "hat", label: "Hodeplagg", emoji: "\u{1F3A9}" },
-  { type: "robe", label: "Rustning", emoji: "\u{1F9E5}" },
-  { type: "staff", label: "V\u00e5pen", emoji: "\u{1FA84}" },
-  { type: "familiar", label: "Familiar", emoji: "\u{1F43E}" },
-];
+type EditTab = "body" | "hair" | "equipment";
 
 export function AvatarEditor({
-  currentConfig,
+  config,
   characterClass,
-  items,
   level,
-  onSave,
+  onChange,
 }: AvatarEditorProps) {
-  const [config, setConfig] = useState<AvatarConfig>({ ...currentConfig });
-
-  function selectItem(type: ItemType, slug: string) {
-    setConfig((prev) => ({ ...prev, [type]: slug }));
-  }
-
-  function isUnlocked(item: AvatarItem): boolean {
-    if (item.is_boss_drop) return false;
-    return item.unlock_level <= level;
-  }
+  const [activeTab, setActiveTab] = useState<EditTab>("body");
 
   return (
     <View className="flex-1">
-      <View className="items-center py-6">
-        <WizardAvatar
+      {/* Live preview */}
+      <View className="items-center py-4">
+        <CharacterRenderer
           config={config}
           characterClass={characterClass}
+          level={level}
           size="xl"
           showClass
         />
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {ITEM_CATEGORIES.map((cat) => {
-          const categoryItems = items.filter((i) => i.type === cat.type);
-          if (categoryItems.length === 0) return null;
+      {/* Tab bar */}
+      <View className="flex-row gap-1 mx-4 mb-3 bg-dark-100 rounded-lg border-2 border-dark-50 p-1">
+        {(["body", "hair", "equipment"] as const).map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            className={`flex-1 rounded-md py-2 ${
+              activeTab === tab ? "bg-primary-500" : ""
+            }`}
+            onPress={() => setActiveTab(tab)}
+          >
+            <Text
+              className={`text-center font-pixel text-[8px] ${
+                activeTab === tab ? "text-white" : "text-white/25"
+              }`}
+            >
+              {tab === "body" ? "Kropp" : tab === "hair" ? "Har" : "Utstyr"}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-          return (
-            <View key={cat.type} className="mb-5">
-              <Text className="font-pixel text-xs text-white/60 mb-2 px-1">
-                {cat.emoji} {cat.label}
-              </Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {categoryItems.map((item) => {
-                  const unlocked = isUnlocked(item);
-                  const isSelected =
-                    config[cat.type as keyof AvatarConfig] === item.slug;
-
-                  return (
-                    <TouchableOpacity
-                      key={item.slug}
-                      onPress={() =>
-                        unlocked && selectItem(cat.type, item.slug)
-                      }
-                      activeOpacity={unlocked ? 0.7 : 1}
-                      className="mr-2"
-                    >
-                      <RarityBorder
-                        rarity={isSelected ? item.rarity : "common"}
-                      >
-                        <View
-                          className={`w-16 h-16 items-center justify-center rounded-md ${
-                            isSelected ? "bg-dark-100" : "bg-dark-200"
-                          } ${!unlocked ? "opacity-40" : ""}`}
-                        >
-                          <Text className="text-xl">
-                            {getItemEmoji(item)}
-                          </Text>
-                          {!unlocked && (
-                            <Text className="font-pixel text-[7px] text-white/50 mt-1">
-                              Lv {item.unlock_level}
-                            </Text>
-                          )}
-                        </View>
-                      </RarityBorder>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
+      {/* Content */}
+      <ScrollView className="flex-1 px-4">
+        {activeTab === "body" && (
+          <View>
+            <Text className="font-pixel text-[9px] text-white/30 uppercase tracking-wider mb-2">
+              Kroppsfarge
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              {BODY_COLORS.map((color) => (
+                <TouchableOpacity
+                  key={color.slug}
+                  onPress={() => onChange({ body_color: color.slug })}
+                  className={`rounded-lg border-2 p-2 items-center w-20 ${
+                    config.body_color === color.slug
+                      ? "border-primary-400"
+                      : "border-dark-50"
+                  }`}
+                >
+                  <View
+                    className="w-8 h-8 rounded-full mb-1"
+                    style={{ backgroundColor: color.hex }}
+                  />
+                  <Text className="text-[10px] text-white/50">{color.label}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
-          );
-        })}
-      </ScrollView>
+          </View>
+        )}
 
-      <TouchableOpacity
-        className="bg-primary-500 rounded-lg py-4 mt-4 items-center border-2 border-primary-700"
-        onPress={() => onSave(config)}
-      >
-        <Text className="font-pixel text-sm text-white">Lagre</Text>
-      </TouchableOpacity>
+        {activeTab === "hair" && (
+          <View>
+            <Text className="font-pixel text-[9px] text-white/30 uppercase tracking-wider mb-2">
+              Harstil
+            </Text>
+            <View className="flex-row flex-wrap gap-2 mb-4">
+              <TouchableOpacity
+                onPress={() => onChange({ hair_style: null })}
+                className={`rounded-lg border-2 p-2 items-center w-20 ${
+                  !config.hair_style ? "border-primary-400" : "border-dark-50"
+                }`}
+              >
+                <Text className="text-lg">{"\uD83E\uDDB2"}</Text>
+                <Text className="text-[10px] text-white/50">Ingen</Text>
+              </TouchableOpacity>
+              {HAIR_STYLES.map((style) => (
+                <TouchableOpacity
+                  key={style.slug}
+                  onPress={() => onChange({ hair_style: style.slug })}
+                  className={`rounded-lg border-2 p-2 items-center w-20 ${
+                    config.hair_style === style.slug
+                      ? "border-primary-400"
+                      : "border-dark-50"
+                  }`}
+                >
+                  <Text className="text-lg">{"\uD83D\uDC87"}</Text>
+                  <Text className="text-[10px] text-white/50">{style.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text className="font-pixel text-[9px] text-white/30 uppercase tracking-wider mb-2">
+              Harfarge
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              {HAIR_COLORS.map((color) => (
+                <TouchableOpacity
+                  key={color.slug}
+                  onPress={() => onChange({ hair_color: color.slug })}
+                  className={`rounded-lg border-2 p-2 items-center w-20 ${
+                    config.hair_color === color.slug
+                      ? "border-primary-400"
+                      : "border-dark-50"
+                  }`}
+                >
+                  <View
+                    className="w-8 h-8 rounded-full mb-1"
+                    style={{ backgroundColor: color.hex }}
+                  />
+                  <Text className="text-[10px] text-white/50">{color.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {activeTab === "equipment" && (
+          <View>
+            <PixelCard className="items-center py-6 mb-4">
+              <Text className="text-3xl mb-2">{"\uD83D\uDC5C"}</Text>
+              <Text className="font-pixel text-xs text-white/50">
+                Wardrobe
+              </Text>
+              <Text className="text-sm text-white/25 mt-1">
+                Utstyr administreres i Wardrobe-skjermen
+              </Text>
+            </PixelCard>
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
-}
-
-function getItemEmoji(item: AvatarItem): string {
-  const typeEmoji: Record<string, string> = {
-    body_color: "\u{1F534}",
-    hat: "\u{1F3A9}",
-    robe: "\u{1F9E5}",
-    staff: "\u{1FA84}",
-    familiar: "\u{1F43E}",
-  };
-  return typeEmoji[item.type] ?? "\u{2753}";
 }
