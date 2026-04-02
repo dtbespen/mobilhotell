@@ -35,8 +35,11 @@ export function useActivities() {
   useEffect(() => {
     if (!family) return;
 
+    const channelName = `activities-${family.id}`;
+    supabase.channel(channelName).unsubscribe();
+
     const channel = supabase
-      .channel("activities-realtime")
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
@@ -53,7 +56,7 @@ export function useActivities() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [family, fetchActivities]);
+  }, [family?.id]);
 
   async function startActivity(activityType: ActivityType) {
     if (!profile) return { error: new Error("Ingen profil") };

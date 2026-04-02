@@ -76,8 +76,11 @@ export function usePoints() {
   useEffect(() => {
     if (!family) return;
 
+    const channelName = `points-${family.id}`;
+    supabase.channel(channelName).unsubscribe();
+
     const channel = supabase
-      .channel("points-realtime")
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
@@ -94,7 +97,7 @@ export function usePoints() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [family, fetchPoints]);
+  }, [family?.id]);
 
   return { ...summary, isLoading, refresh: fetchPoints };
 }
