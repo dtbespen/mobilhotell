@@ -15,6 +15,7 @@ import { useSkillAllocations } from "@/hooks/useSkillAllocations";
 import { useClassAbilities } from "@/hooks/useClassAbilities";
 import { useAvatarItems } from "@/hooks/useAvatarItems";
 import { useAchievements } from "@/hooks/useAchievements";
+import { useSeasonQuests } from "@/hooks/useSeasonQuests";
 import {
   getLevel,
   getWizardRank,
@@ -106,6 +107,7 @@ export default function CharacterScreen() {
   const achievements = useAchievements();
 
   const availableSkillPoints = getAvailablePoints(level, skillAlloc.simpleAllocations);
+  const seasonQuests = useSeasonQuests();
 
   const leftSlots = EQUIPMENT_SLOTS.filter((s) => s.side === "left");
   const rightSlots = EQUIPMENT_SLOTS.filter((s) => s.side === "right");
@@ -519,6 +521,7 @@ export default function CharacterScreen() {
                         {typeItems.map((item) => {
                           const isUnlocked = item.unlock_level <= level && !item.is_boss_drop;
                           const isEquipped = avatarConfig[itemType as keyof AvatarConfig] === item.slug;
+                          const previewConfig = { ...avatarConfig, [itemType]: item.slug };
                           return (
                             <TouchableOpacity
                               key={item.id}
@@ -537,11 +540,15 @@ export default function CharacterScreen() {
                             >
                               <RarityBorder rarity={isUnlocked ? (item.rarity as ItemRarity) : "common"}>
                                 <View
-                                  className={`w-20 h-20 items-center justify-center rounded-md ${
+                                  className={`w-24 h-28 items-center justify-center rounded-md ${
                                     isEquipped ? "bg-primary-500/20 border border-primary-500/40" : "bg-dark-200"
                                   } ${!isUnlocked ? "opacity-30" : ""}`}
                                 >
-                                  <Text className="text-2xl">{slotInfo?.emoji ?? "\u2728"}</Text>
+                                  <CharacterRenderer
+                                    config={previewConfig}
+                                    characterClass={characterClass}
+                                    size="sm"
+                                  />
                                   <Text className="font-pixel text-[6px] text-white/50 mt-1" numberOfLines={1}>
                                     {item.name}
                                   </Text>
@@ -572,13 +579,14 @@ export default function CharacterScreen() {
         {/* ── SEASON ── */}
         {section === "season" && (
           <View className="mt-4 pb-10">
+            {/* Tier progress header */}
             <PixelCard variant="glow" className="mx-5">
               <View className="flex-row justify-between items-center mb-2">
                 <Text className="font-pixel text-xs text-accent-400">
                   Tier {currentTier} / 30
                 </Text>
                 <Text className="font-pixel text-xs text-white/40">
-                  {points.total} Mana
+                  {points.total} Mana totalt
                 </Text>
               </View>
               <ManaBar
@@ -588,42 +596,150 @@ export default function CharacterScreen() {
                 size="md"
               />
               <Text className="text-[10px] text-white/25 mt-1">
-                {Math.max(0, xpProgress.required - xpProgress.current)} Mana til Tier {currentTier + 1}
+                {currentTier < 30
+                  ? `${Math.max(0, xpProgress.required - xpProgress.current)} Mana til Tier ${currentTier + 1}`
+                  : "Alle tiers ulast!"}
+              </Text>
+              {currentTier < 30 && seasonTiers[currentTier] && (
+                <View className="mt-2 flex-row items-center bg-dark-300/50 rounded-md px-2 py-1.5">
+                  <Text className="text-sm mr-2">{getRewardEmoji(seasonTiers[currentTier].reward)}</Text>
+                  <Text className="text-[10px] text-white/40 flex-1">
+                    Neste: <Text className="text-accent-400">{seasonTiers[currentTier].reward.label}</Text>
+                  </Text>
+                </View>
+              )}
+            </PixelCard>
+
+            {/* Daily quests */}
+            <Text className="font-pixel text-[10px] text-white/30 uppercase tracking-wider mx-5 mt-5 mb-2">
+              {"\uD83C\uDFAF"} Daglige utfordringer
+            </Text>
+            {seasonQuests.quests.filter((q) => q.period === "daily").map((quest) => (
+              <PixelCard
+                key={quest.questType}
+                className={`mx-5 mb-2 ${quest.completed ? "border-primary-500/20" : ""}`}
+              >
+                <View className="flex-row items-center justify-between mb-1.5">
+                  <Text className={`text-sm flex-1 ${quest.completed ? "text-white/40 line-through" : "text-white"}`}>
+                    {quest.description}
+                  </Text>
+                  <View className={`rounded-md px-2 py-1 ml-2 ${quest.completed ? "bg-primary-500/15" : "bg-accent-500/15"}`}>
+                    <Text className={`font-pixel text-[8px] ${quest.completed ? "text-primary-400" : "text-accent-400"}`}>
+                      {quest.completed ? "\u2713" : `+${quest.seasonXP}`}
+                    </Text>
+                  </View>
+                </View>
+                <View className="h-2 rounded-full bg-dark-100 overflow-hidden">
+                  <View
+                    className={`h-full rounded-full ${quest.completed ? "bg-primary-500" : "bg-accent-500/60"}`}
+                    style={{ width: `${Math.min(100, (quest.current / quest.target) * 100)}%` }}
+                  />
+                </View>
+                <Text className="text-[9px] text-white/20 mt-1">
+                  {quest.current} / {quest.target}
+                  {quest.completed ? " - Fullfort!" : ""}
+                </Text>
+              </PixelCard>
+            ))}
+
+            {/* Weekly quests */}
+            <Text className="font-pixel text-[10px] text-white/30 uppercase tracking-wider mx-5 mt-4 mb-2">
+              {"\uD83D\uDCC5"} Ukentlige utfordringer
+            </Text>
+            {seasonQuests.quests.filter((q) => q.period === "weekly").map((quest) => (
+              <PixelCard
+                key={quest.questType}
+                className={`mx-5 mb-2 ${quest.completed ? "border-primary-500/20" : ""}`}
+              >
+                <View className="flex-row items-center justify-between mb-1.5">
+                  <Text className={`text-sm flex-1 ${quest.completed ? "text-white/40 line-through" : "text-white"}`}>
+                    {quest.description}
+                  </Text>
+                  <View className={`rounded-md px-2 py-1 ml-2 ${quest.completed ? "bg-primary-500/15" : "bg-info-500/15"}`}>
+                    <Text className={`font-pixel text-[8px] ${quest.completed ? "text-primary-400" : "text-info-400"}`}>
+                      {quest.completed ? "\u2713" : `+${quest.seasonXP}`}
+                    </Text>
+                  </View>
+                </View>
+                <View className="h-2 rounded-full bg-dark-100 overflow-hidden">
+                  <View
+                    className={`h-full rounded-full ${quest.completed ? "bg-primary-500" : "bg-info-500/60"}`}
+                    style={{ width: `${Math.min(100, (quest.current / quest.target) * 100)}%` }}
+                  />
+                </View>
+                <Text className="text-[9px] text-white/20 mt-1">
+                  {quest.current} / {quest.target}
+                  {quest.completed ? " - Fullfort!" : ""}
+                </Text>
+              </PixelCard>
+            ))}
+
+            {/* Quest XP summary */}
+            <PixelCard className="mx-5 mt-2 flex-row items-center justify-between">
+              <Text className="text-xs text-white/30">Bonus Mana fra utfordringer:</Text>
+              <Text className="font-pixel text-xs text-accent-400">
+                {seasonQuests.totalXpEarned} / {seasonQuests.totalXpAvailable}
               </Text>
             </PixelCard>
 
-            <Text className="font-pixel text-[10px] text-white/30 uppercase tracking-wider mx-5 mt-4 mb-2">
-              Belonningsbane
+            {/* Reward track */}
+            <Text className="font-pixel text-[10px] text-white/30 uppercase tracking-wider mx-5 mt-5 mb-2">
+              {"\uD83C\uDFC6"} Belonningsbane
             </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-5">
-              {seasonTiers.map((tier) => {
-                const isUnlocked = tier.tier <= currentTier;
-                const isCurrent = tier.tier === currentTier + 1;
-                const rarity = getRarityForReward(tier.reward);
-                const emoji = getRewardEmoji(tier.reward);
-                return (
-                  <View key={tier.tier} className="mr-2 items-center" style={{ width: 72 }}>
-                    <RarityBorder rarity={isUnlocked ? rarity : "common"}>
-                      <View
-                        className={`w-16 h-16 items-center justify-center rounded-md ${
-                          isUnlocked
-                            ? "bg-dark-100"
-                            : isCurrent
-                            ? "bg-dark-200 border border-primary-500/30"
-                            : "bg-dark-300"
-                        } ${!isUnlocked && !isCurrent ? "opacity-40" : ""}`}
-                      >
-                        <Text className="text-xl">{isUnlocked ? emoji : "\uD83D\uDD12"}</Text>
-                        <Text className="font-pixel text-[6px] text-white/40 mt-1">T{tier.tier}</Text>
-                      </View>
-                    </RarityBorder>
-                    <Text className="text-[8px] text-white/30 text-center mt-1" numberOfLines={2}>
-                      {isUnlocked || isCurrent ? tier.reward.label : "???"}
+            {seasonTiers.map((tier) => {
+              const isUnlocked = tier.tier <= currentTier;
+              const isCurrent = tier.tier === currentTier + 1;
+              const rarity = getRarityForReward(tier.reward);
+              const emoji = getRewardEmoji(tier.reward);
+              const manaProgress = Math.min(points.total, tier.cumulativeXp);
+              return (
+                <View
+                  key={tier.tier}
+                  className={`mx-5 mb-2 flex-row items-center rounded-lg border-2 p-3 ${
+                    isUnlocked
+                      ? "border-primary-500/30 bg-dark-100"
+                      : isCurrent
+                      ? "border-accent-500/30 bg-dark-200"
+                      : "border-dark-50 bg-dark-300 opacity-60"
+                  }`}
+                >
+                  <RarityBorder rarity={isUnlocked ? rarity : "common"}>
+                    <View className="w-12 h-12 items-center justify-center rounded-md bg-dark-300">
+                      <Text className="text-lg">{isUnlocked ? emoji : "\uD83D\uDD12"}</Text>
+                    </View>
+                  </RarityBorder>
+                  <View className="flex-1 ml-3">
+                    <View className="flex-row items-center justify-between">
+                      <Text className={`font-pixel text-[9px] ${isUnlocked ? "text-primary-400" : isCurrent ? "text-accent-400" : "text-white/30"}`}>
+                        Tier {tier.tier}
+                      </Text>
+                      <Text className="text-[9px] text-white/20">
+                        {tier.cumulativeXp} Mana
+                      </Text>
+                    </View>
+                    <Text className={`text-xs mt-0.5 ${isUnlocked ? "text-white/60" : "text-white/30"}`} numberOfLines={1}>
+                      {tier.reward.label}
                     </Text>
+                    {!isUnlocked && (
+                      <View className="mt-1.5">
+                        <View className="h-1.5 rounded-full bg-dark-100 overflow-hidden">
+                          <View
+                            className="h-full rounded-full bg-accent-500/50"
+                            style={{ width: `${Math.min(100, (manaProgress / tier.cumulativeXp) * 100)}%` }}
+                          />
+                        </View>
+                        <Text className="text-[8px] text-white/15 mt-0.5">
+                          {manaProgress} / {tier.cumulativeXp}
+                        </Text>
+                      </View>
+                    )}
+                    {isUnlocked && (
+                      <Text className="text-[8px] text-primary-400/50 mt-0.5">{"\u2713"} Ulast</Text>
+                    )}
                   </View>
-                );
-              })}
-            </ScrollView>
+                </View>
+              );
+            })}
           </View>
         )}
       </ScrollView>
@@ -649,6 +765,7 @@ export default function CharacterScreen() {
             characterClass={characterClass}
             level={level}
             onChange={handleAvatarChange}
+            onClassChange={handleClassChange}
           />
         </SafeAreaView>
       </Modal>

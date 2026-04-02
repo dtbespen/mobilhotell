@@ -25,6 +25,34 @@ export function useFamily() {
     fetchMembers();
   }, [fetchMembers]);
 
+  useEffect(() => {
+    if (!family) return;
+
+    const channelName = `family-profiles-${family.id}`;
+    const existing = supabase.getChannels().find((ch) => ch.topic === `realtime:${channelName}`);
+    if (existing) supabase.removeChannel(existing);
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `family_id=eq.${family.id}`,
+        },
+        () => {
+          fetchMembers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [family?.id, fetchMembers]);
+
   return {
     members,
     isLoading,

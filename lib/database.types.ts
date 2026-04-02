@@ -8,6 +8,8 @@ export type ItemType = "hat" | "armor" | "cape" | "weapon" | "shield" | "staff" 
 
 export type AvatarConfig = {
   body_color: string;
+  body_shape?: string;
+  eye_color?: string;
   hair_style: string | null;
   hair_color: string | null;
   hat: string | null;

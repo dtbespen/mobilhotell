@@ -148,6 +148,7 @@ export default function WizardTowerScreen() {
               Alert.alert("Feil", typeof result.error === "string" ? result.error : "Noe gikk galt");
             } else {
               Alert.alert("\uD83C\uDF81 Daglig belonning!", `+${result.mana} Mana!`);
+              points.refresh();
             }
           }}
           activeOpacity={dailyLogin.isClaimed ? 1 : 0.7}
@@ -278,9 +279,9 @@ export default function WizardTowerScreen() {
 
         {/* Stats */}
         <View className="mt-4 flex-row gap-3 px-6 flex-wrap">
-          <StatBadge icon={"\u26A1"} value={`${points.today}/${DAILY_MANA_CAP}`} label="I dag" color="primary" />
-          <StatBadge icon={"\uD83D\uDCC5"} value={points.thisWeek} label="Uka" color="info" />
-          <StatBadge icon={getStreakFlameEmoji(points.streak)} value={points.streak} label="Streak" color="danger" />
+          <StatBadge icon={"\u2728"} value={points.today} label="I dag" color="primary" />
+          <StatBadge icon={"\uD83D\uDCC5"} value={points.thisWeek} label="Denne uka" color="info" />
+          <StatBadge icon={getStreakFlameEmoji(points.streak)} value={`${points.streak}d`} label="Streak" color="danger" />
           <StatBadge icon={"\u2B50"} value={currentStars} label="Stars" color="accent" />
         </View>
 

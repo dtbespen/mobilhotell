@@ -122,19 +122,41 @@ export const BODY_COLORS = [
   { slug: "olive", label: "Oliven", hex: "#c4a882" },
   { slug: "bronze", label: "Bronse", hex: "#a0784a" },
   { slug: "brown", label: "Brun", hex: "#7a5232" },
+  { slug: "dark", label: "Mork", hex: "#5a3820" },
   { slug: "lavender", label: "Lavendel", hex: "#c8b0ff" },
   { slug: "blue", label: "Bla", hex: "#6aa0ff" },
   { slug: "green", label: "Gronn", hex: "#6aff8a" },
   { slug: "pink", label: "Rosa", hex: "#ff8aaa" },
+  { slug: "frost", label: "Frost", hex: "#a0d8ff" },
+] as const;
+
+export const BODY_SHAPES = [
+  { slug: "normal", label: "Normal", emoji: "\uD83E\uDDCD" },
+  { slug: "small", label: "Liten", emoji: "\uD83E\uDDD2" },
+  { slug: "tall", label: "Hoy", emoji: "\uD83E\uDDD6" },
+  { slug: "wide", label: "Bred", emoji: "\uD83E\uDDCC" },
+] as const;
+
+export const EYE_COLOR_OPTIONS = [
+  { slug: "dark", label: "Mork", hex: "#1a1a2e" },
+  { slug: "blue", label: "Bla", hex: "#3366cc" },
+  { slug: "green", label: "Gronn", hex: "#2e8b57" },
+  { slug: "brown", label: "Brun", hex: "#6b4226" },
+  { slug: "purple", label: "Lilla", hex: "#7733aa" },
+  { slug: "red", label: "Rod", hex: "#cc2222" },
+  { slug: "gold", label: "Gull", hex: "#cc9900" },
+  { slug: "silver", label: "Solv", hex: "#8899aa" },
 ] as const;
 
 export const HAIR_STYLES = [
-  { slug: "plain", label: "Enkel" },
+  { slug: "plain", label: "Kort" },
   { slug: "long", label: "Langt" },
   { slug: "mohawk", label: "Mohawk" },
   { slug: "messy", label: "Rufset" },
   { slug: "ponytail", label: "Hestehale" },
   { slug: "braids", label: "Fletter" },
+  { slug: "curly", label: "Krollet" },
+  { slug: "bob", label: "Bob" },
 ] as const;
 
 export const HAIR_COLORS = [
@@ -146,4 +168,6 @@ export const HAIR_COLORS = [
   { slug: "green", label: "Gronn", hex: "#44cc44" },
   { slug: "purple", label: "Lilla", hex: "#9944ff" },
   { slug: "pink", label: "Rosa", hex: "#ff66aa" },
+  { slug: "silver", label: "Solv", hex: "#c0c0c0" },
+  { slug: "white", label: "Hvit", hex: "#e8e8e8" },
 ] as const;

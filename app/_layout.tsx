@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { useFonts, PressStart2P_400Regular } from "@expo-google-fonts/press-start-2p";
 import { AuthProvider } from "@/lib/auth";
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -15,7 +15,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (fontsLoaded) {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync().catch(() => {});
     }
   }, [fontsLoaded]);
 

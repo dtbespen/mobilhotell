@@ -64,6 +64,11 @@ export function useDailyLogin() {
         .update({ login_streak: loginStreak })
         .eq("id", profile.id);
 
+      // Log as activity so it shows up in mana total
+      if (!error) {
+        await logBonusManaActivity(profile.id, reward.mana, "daily_login");
+      }
+
       return { error, mana: reward.mana };
     }
 
@@ -74,9 +79,33 @@ export function useDailyLogin() {
 
     if (!error) {
       setTodayLogin((prev) => (prev ? { ...prev, reward_claimed: true } : prev));
+      await logBonusManaActivity(profile.id, reward.mana, "daily_login");
     }
 
     return { error, mana: reward.mana };
+  }
+
+  async function logBonusManaActivity(profileId: string, mana: number, source: string) {
+    const now = new Date().toISOString();
+    const { data: types } = await supabase
+      .from("activity_types")
+      .select("id")
+      .eq("category", "custom")
+      .limit(1)
+      .single();
+
+    if (!types) return;
+
+    await supabase.from("activities").insert({
+      profile_id: profileId,
+      activity_type_id: types.id,
+      started_at: now,
+      ended_at: now,
+      duration_minutes: 0,
+      points_earned: mana,
+      source: "manual",
+      metadata: { bonus_type: source },
+    });
   }
 
   return {
