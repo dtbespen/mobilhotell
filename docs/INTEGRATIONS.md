@@ -1,6 +1,6 @@
 # Integrasjoner & Distribusjon – Teknisk Research
 
-Oversikt over app-distribusjon, native builds og eksterne integrasjoner for automatisk poengsamling. Researched april 2026.
+Oversikt over app-distribusjon, native builds og eksterne integrasjoner for automatisk poengsamling. Oppdatert april 2026.
 
 ---
 
@@ -526,6 +526,305 @@ Hvert 5. minutt:
 
 ---
 
+## 6. Apple HealthKit / Garmin (Treningsdata)
+
+**Status:** Høy verdi. Krever development build (allerede planlagt).
+
+### Konsept
+Hente treningsdata (steg, løping, gåturer, kalorier, søvn) fra Apple Health. Garmin-klokker synkroniserer automatisk til Apple Health via Garmin Connect-appen, så dette dekker Garmin-data uten å trenge Garmin sitt eget API.
+
+### Hvorfor HealthKit fremfor Garmin Health API direkte?
+
+| | Apple HealthKit | Garmin Health API |
+|--|----------------|-------------------|
+| **Tilgang** | Gratis, ingen godkjenning | Krever godkjenning fra Garmin Developer Program |
+| **Personlige prosjekter** | Ingen begrensning | Tiltenkt "business use" – indie/hobby kan få avslag |
+| **Datakilder** | Garmin + Apple Watch + iPhone + alle andre apper | Kun Garmin |
+| **Databehandling** | Lokalt på enhet (personvernvennlig) | Via Garmin sine servere |
+| **Dev build nødvendig** | Ja (allerede planlagt for Screen Time) | Nei (server-side), men trenger OAuth-flyt i appen |
+
+### Dataflyt
+```
+Garmin-klokke → Garmin Connect-app → Apple Health → HealthKit API → Mobilhotell-appen
+                                                                      ↓
+                                                               Supabase (activities)
+                                                               source: 'healthkit'
+```
+
+### React Native-biblioteker
+
+| Bibliotek | Beskrivelse |
+|-----------|-------------|
+| **`expo-healthkit-module`** | Expo-modul, støtter iOS HealthKit + Android Health Connect. Steg, puls, kalorier, søvn, treningsøkter. |
+| **`@kingstinct/react-native-healthkit`** | TypeScript-first, omfattende HealthKit-API, 500+ stars, aktivt vedlikeholdt. |
+| **`expo-health-kit`** | Enkel Expo-modul fokusert på steg-data. |
+
+### Tilgjengelige data
+- **Steg** (daglig, per time)
+- **Treningsøkter** (type, varighet, distanse, kalorier)
+- **Puls** (hvilepuls, gjennomsnitt, maks)
+- **Søvn** (varighet, faser)
+- **Kalorier** (forbrukt, aktivt)
+- **Distanse** (gåing, løping)
+
+### Krav
+- Development build (kreves allerede for Screen Time API)
+- Fysisk enhet (HealthKit fungerer ikke i simulator)
+- Bruker må godkjenne tilgang til helse-data i appen
+- `NSHealthShareUsageDescription` i Info.plist
+
+### Implementasjonsplan
+```
+1. npm install @kingstinct/react-native-healthkit (eller expo-healthkit-module)
+2. Legg til HealthKit capability i app.config.js
+3. Implementer permission-flyt (be om tilgang til steg, treningsøkter, søvn)
+4. Hent daglige steg og treningsøkter
+5. Synk til Supabase: source='healthkit', metadata={type, duration, steps, ...}
+6. Opprett automatiske quests: "8000 steg i dag", "3 treningsøkter denne uken"
+```
+
+### Mapping til vår datamodell
+```typescript
+// activity_types
+{ name: "Gåtur", category: "exercise", source: "healthkit" }
+{ name: "Løping", category: "exercise", source: "healthkit" }
+{ name: "Daglige steg", category: "exercise", source: "healthkit" }
+
+// activities
+{
+  source: "healthkit",
+  activity_type: "Gåtur",
+  metadata: {
+    workout_type: "walking",
+    duration_minutes: 45,
+    distance_km: 3.2,
+    calories: 210,
+    steps: 4800,
+    source_device: "Garmin Venu"
+  }
+}
+```
+
+### Poenggivning
+- **X Mana per 1000 steg** (daglig, automatisk)
+- **Bonus-Mana for treningsøkter** over en viss varighet
+- **Quest:** "Gå 8000 steg i dag" / "Tren 3 ganger denne uken"
+- **Streak:** "5 dager på rad med 6000+ steg"
+
+### Vurdering
+- Svært god integrasjon – fullautomatisk, ingen manuell logging
+- Dekker alle treningskilder, ikke bare Garmin
+- Krever dev build som allerede er planlagt
+- Personvernvennlig – all data behandles på enheten
+- Naturlig utvidelse av "belønne gode vaner"-konseptet
+
+---
+
+## 7. Leseaktivitet (Open Library API + Goodreads RSS)
+
+**Status:** Mulig. Lav kompleksitet. Krever IKKE development build.
+
+### Konsept
+Kombinere **Open Library API** for boksøk og metadata med **Goodreads RSS** for bokhylle-synk og **manuell lesetid-logging** i appen. Brukeren søker opp en bok, får automatisk tittel, forfatter, omslag og sideantall – og logger deretter lesetid med en timer.
+
+### Open Library API (bokdata og søk)
+
+**Helt gratis, ingen autentisering, åpen kildekode.** Drevet av Internet Archive.
+
+#### Søk etter bøker
+```
+GET https://openlibrary.org/search.json?q=harry+potter&fields=key,title,author_name,first_publish_year,number_of_pages_median,cover_i,isbn&limit=10
+```
+
+Respons (forenklet):
+```json
+{
+  "numFound": 585,
+  "docs": [
+    {
+      "key": "/works/OL82563W",
+      "title": "Harry Potter and the Philosopher's Stone",
+      "author_name": ["J. K. Rowling"],
+      "first_publish_year": 1997,
+      "number_of_pages_median": 309,
+      "cover_i": 10521270,
+      "isbn": ["9780747532743", "0747532745"]
+    }
+  ]
+}
+```
+
+#### Hente bokomslag
+```
+https://covers.openlibrary.org/b/id/{cover_i}-M.jpg     (via cover ID)
+https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg       (via ISBN)
+```
+Størrelser: `S` (liten), `M` (medium), `L` (stor).
+
+#### Hente detaljert bokinfo
+```
+GET https://openlibrary.org/works/OL82563W.json
+```
+Gir beskrivelse, emner, relaterte verk m.m.
+
+#### API-egenskaper
+
+| Egenskap | Detalj |
+|----------|--------|
+| **Pris** | Gratis |
+| **Autentisering** | Ingen (identifiser med `User-Agent` for bedre rate limits) |
+| **Rate limit** | 1 req/sek (uidentifisert), 3 req/sek (med `User-Agent` + e-post) |
+| **Dataformat** | JSON, YAML, RDF/XML |
+| **Dekning** | 20M+ bøker, de fleste med sideantall og omslag |
+
+#### Hva vi bruker fra Open Library
+
+| Felt | Bruk i appen |
+|------|-------------|
+| `title` | Vis boktittel |
+| `author_name` | Vis forfatter |
+| `cover_i` / `isbn` | Hente bokomslag-bilde |
+| `number_of_pages_median` | Beregne sidefremdrift og bonus for fullført bok |
+| `first_publish_year` | Vis i bokinfo |
+| `key` (work ID) | Unik identifikator for å lagre i vår DB |
+| `subject` | Kan brukes til quests: "Les en fantasy-bok" |
+
+### Amazon Kindle API (ikke tilgjengelig)
+
+Amazon har **ingen offentlig API** for Kindle-lesedata. Whispersync samler inn detaljert leseposisjon og tid, men deler det ikke med tredjeparter. De fjernet til og med Kindle-til-Goodreads-synkronisering i 2024. GDPR/CCPA-eksport inkluderer heller ikke lesefremdrift. EU sin Digital Markets Act kan tvinge endring på sikt, men foreløpig er det helt lukket.
+
+### Goodreads RSS (bokhylle-synk)
+
+Goodreads la ned sitt offisielle API i **desember 2020**, men RSS-feeds per hylle fungerer fortsatt:
+```
+https://www.goodreads.com/review/list_rss/{PROFILE_ID}?key={RSS_KEY}&shelf=currently-reading
+https://www.goodreads.com/review/list_rss/{PROFILE_ID}?key={RSS_KEY}&shelf=read
+```
+
+**Hva man kan hente:** Tittel, forfatter, bokomslag, dato lagt til, rating.
+**Hva man IKKE kan hente:** Sidefremdrift, lesetid, daglig lesing.
+
+RSS-nøkkelen er unik per bruker og finnes på Goodreads under profil → "RSS feed"-lenken. Maks 100 elementer per feed.
+
+**Goodreads er valgfritt** – appen fungerer helt fint uten, da brukeren kan søke opp bøker direkte via Open Library.
+
+### Anbefalt strategi
+
+**Kjerne (krever ingen external accounts):**
+1. **Boksøk via Open Library** – bruker søker opp boken, får tittel, forfatter, omslag og sideantall automatisk
+2. **Lesetid-timer i appen** – bruker trykker "Les" og stopper når ferdig, eller logger minutter manuelt
+3. **Sidefremdrift** – bruker oppdaterer "lest til side X av Y" (Y fra Open Library)
+4. **Fullført bok** – når fremdrift = 100%, gi bonus-Mana
+
+**Valgfritt tillegg (Goodreads-kobling):**
+5. **Daglig RSS-polling** – Supabase Edge Function sjekker "read"-hyllen
+6. **Auto-deteksjon av fullført bok** – ny bok på "read" → bonus-Mana
+
+### Dataflyt
+```
+Bruker søker bok i appen
+        ↓
+Open Library API → tittel, forfatter, omslag, sideantall
+        ↓
+Lagre som "reading_books" i Supabase
+        ↓
+Bruker logger lesetid (timer/manuelt) → activities (source: 'manual')
+Bruker oppdaterer sidefremdrift       → reading_books.current_page
+        ↓
+Fullført (current_page >= total_pages) → bonus-activity (source: 'app_auto')
+
+(Valgfritt: Goodreads RSS → Edge Function → detekter fullførte bøker)
+```
+
+### Implementasjonsplan
+```
+1. Lag boksøk-komponent som kaller Open Library Search API
+2. Vis søkeresultater med omslag, tittel, forfatter, sideantall
+3. "Legg til bok" → lagre i reading_books-tabell med Open Library work ID
+4. Lesetid-timer (start/stopp) eller manuell minutt-logging
+5. Sidefremdrift-slider/input (side X av Y)
+6. Automatisk "Fullført bok"-activity når fremdrift = 100%
+7. (Valgfritt) Goodreads RSS-synk via Edge Function for auto-deteksjon
+```
+
+### Ny tabell: reading_books
+```sql
+create table reading_books (
+  id uuid primary key default uuid_generate_v4(),
+  profile_id uuid not null references profiles(id) on delete cascade,
+  title text not null,
+  author text,
+  cover_url text,
+  total_pages integer,
+  current_page integer default 0,
+  status text not null default 'reading',  -- 'reading', 'finished', 'dropped'
+  open_library_key text,                   -- '/works/OL82563W'
+  isbn text,
+  goodreads_id text,
+  started_at timestamp with time zone default now(),
+  finished_at timestamp with time zone,
+  total_minutes_read integer default 0,    -- akkumulert fra activities
+  created_at timestamp with time zone default now()
+);
+```
+
+### Mapping til vår datamodell
+```typescript
+// activity_types
+{ name: "Lesing", category: "reading", source: "manual", points_per_minute: 1.0 }
+{ name: "Fullført bok", category: "reading", source: "app_auto" }
+
+// activities: leseøkt (timer eller manuell)
+{
+  source: "manual",
+  activity_type: "Lesing",
+  metadata: {
+    reading_book_id: "uuid-...",
+    book_title: "Harry Potter og Ildbegeret",
+    book_author: "J.K. Rowling",
+    open_library_key: "/works/OL82563W",
+    minutes_read: 30,
+    pages_read: 25,             // fra side 120 til 145
+    page_from: 120,
+    page_to: 145
+  }
+}
+
+// activities: automatisk fullført-bok-bonus
+{
+  source: "app_auto",           // appen genererer selv når fremdrift = 100%
+  activity_type: "Fullført bok",
+  metadata: {
+    reading_book_id: "uuid-...",
+    book_title: "Harry Potter og Ildbegeret",
+    book_author: "J.K. Rowling",
+    total_pages: 636,
+    total_minutes_read: 840,
+    days_to_finish: 14
+  }
+}
+```
+
+### Poenggivning
+- **X Mana per minutt lest** (manuell logging/timer)
+- **Bonus-Mana per 50 sider** (fremdriftsbelønning)
+- **Stor Mana-bonus for fullført bok** (skalert etter sideantall fra Open Library)
+- **Quest:** "Les 30 minutter i dag" / "Fullfør en bok denne uken"
+- **Quest:** "Les en bok med 300+ sider" (mulig takket være sideantall-data)
+- **Streak:** "Lest noe 3 dager på rad"
+- **Ekstra bonus for tykke bøker** (sideantall fra Open Library gjør dette mulig)
+
+### Vurdering
+- **Open Library er ideell** – gratis, ingen auth, gir sideantall og omslag
+- Sideantall muliggjør fremdriftssporing og skalert belønning
+- Krever IKKE development build (alt er REST API + manuell logging)
+- Fungerer helt uavhengig av Goodreads (men kan kombineres)
+- Goodreads RSS er valgfritt tillegg for de som bruker det
+- Passer utmerket inn i "belønne gode vaner"-konseptet
+- Lav risiko – Open Library er drevet av Internet Archive, en ideell organisasjon
+
+---
+
 ## Prioritert implementeringsrekkefølge
 
 ### Fase 1.5 (nå – forutsetning for alt annet)
@@ -538,13 +837,17 @@ Hvert 5. minutt:
 5. **Fysisk mobilhotell** – ESP32 + sensor, uavhengig av Apple
 6. **Push-varsler** – påminnelser og oppmuntring
 
-### Fase 3 (spillintegrasjoner)
-7. **Fortnite stats** – bonus-data (matches, wins, kills) utover ren skjermtid
-8. **Ny source-type i DB** – `game_api` for spillspesifikke stats
+### Fase 3 (positive vaner)
+7. **Apple HealthKit / Garmin** – automatisk steg, treningsøkter, søvn. Krever allerede dev build.
+8. **Goodreads / Lesing** – semi-automatisk via RSS + manuell lesetid-logging. Krever IKKE dev build.
 
-### Fase 4 (vurderes)
-9. **Roblox** – kun hvis de åpner et offisielt tredjeparts-API
-10. **Andre spill** – Minecraft, etc. (avhenger av tilgjengelige API-er)
+### Fase 4 (spillintegrasjoner)
+9. **Fortnite stats** – bonus-data (matches, wins, kills) utover ren skjermtid
+10. **Ny source-type i DB** – `game_api` for spillspesifikke stats
+
+### Fase 5 (vurderes)
+11. **Roblox** – kun hvis de åpner et offisielt tredjeparts-API
+12. **Andre spill** – Minecraft, etc. (avhenger av tilgjengelige API-er)
 
 ### Ikke prioritert
 - YouTube (dekkes av Screen Time)
@@ -561,7 +864,28 @@ Utvides til:
 ```sql
 alter table activities drop constraint activities_source_check;
 alter table activities add constraint activities_source_check
-  check (source in ('manual', 'sensor', 'screen_time_api', 'game_api'));
+  check (source in ('manual', 'sensor', 'screen_time_api', 'game_api', 'healthkit', 'goodreads_rss', 'app_auto'));
+```
+
+### Ny tabell: reading_books
+```sql
+create table reading_books (
+  id uuid primary key default uuid_generate_v4(),
+  profile_id uuid not null references profiles(id) on delete cascade,
+  title text not null,
+  author text,
+  cover_url text,                          -- fra Open Library Covers API
+  total_pages integer,                     -- fra Open Library (number_of_pages_median)
+  current_page integer default 0,
+  status text not null default 'reading',  -- 'reading', 'finished', 'dropped'
+  open_library_key text,                   -- '/works/OL82563W'
+  isbn text,
+  goodreads_id text,
+  started_at timestamp with time zone default now(),
+  finished_at timestamp with time zone,
+  total_minutes_read integer default 0,    -- akkumulert fra activities
+  created_at timestamp with time zone default now()
+);
 ```
 
 ### Ny tabell: connected_accounts
@@ -569,7 +893,7 @@ alter table activities add constraint activities_source_check
 create table connected_accounts (
   id uuid primary key default uuid_generate_v4(),
   profile_id uuid not null references profiles(id) on delete cascade,
-  platform text not null,  -- 'fortnite', 'roblox', 'apple_screen_time'
+  platform text not null,  -- 'fortnite', 'roblox', 'apple_screen_time', 'garmin_healthkit', 'goodreads'
   external_username text,
   external_id text,
   is_active boolean default true,
