@@ -36,7 +36,8 @@ export function useActivities() {
     if (!family) return;
 
     const channelName = `activities-${family.id}`;
-    supabase.channel(channelName).unsubscribe();
+    const existing = supabase.getChannels().find((ch) => ch.topic === `realtime:${channelName}`);
+    if (existing) supabase.removeChannel(existing);
 
     const channel = supabase
       .channel(channelName)

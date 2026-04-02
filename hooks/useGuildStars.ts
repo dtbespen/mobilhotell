@@ -67,8 +67,12 @@ export function useGuildStars() {
   useEffect(() => {
     if (!familyId) return;
 
+    const channelName = `guild-stars-${familyId}`;
+    const existing = supabase.getChannels().find((ch) => ch.topic === `realtime:${channelName}`);
+    if (existing) supabase.removeChannel(existing);
+
     const channel = supabase
-      .channel(`guild-stars-${familyId}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
