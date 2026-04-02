@@ -8,8 +8,11 @@ module.exports = {
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
+      fontFamily: {
+        pixel: ["PressStart2P"],
+        body: ["Inter"],
+      },
       colors: {
-        // Vivid green – primary
         primary: {
           50: "#dfffec",
           100: "#b0ffd0",
@@ -23,39 +26,39 @@ module.exports = {
           900: "#005625",
           950: "#003316",
         },
-        // Vivid amber/gold – rewards / Plugs
         accent: {
           50: "#fff9e5",
           100: "#ffefb8",
           200: "#ffe080",
           300: "#ffd04a",
           400: "#ffc020",
-          500: "#ffab00",
-          600: "#e08f00",
-          700: "#b87000",
-          800: "#945800",
-          900: "#7a4800",
-          950: "#4a2a00",
+          500: "#ffba24",
+          600: "#e0a000",
+          700: "#b88000",
+          800: "#946400",
+          900: "#7a5200",
+          950: "#4a3000",
         },
-        // Vivid red/coral – streaks, alerts
         danger: {
           50: "#ffece9",
           100: "#ffd4ce",
           200: "#ffada3",
-          500: "#ff4040",
-          600: "#ee2020",
-          700: "#cc1515",
+          300: "#ff8a7d",
+          400: "#ff6b5c",
+          500: "#ff5c4d",
+          600: "#ee3020",
+          700: "#cc2015",
         },
-        // Vivid purple – info, links
         info: {
           50: "#eeebff",
           100: "#ddd5ff",
           200: "#bfb0ff",
+          300: "#a08aff",
+          400: "#8e76ff",
           500: "#7b61ff",
           600: "#6248e5",
           700: "#4d36c4",
         },
-        // Dark base – backgrounds
         dark: {
           50: "#2a2d35",
           100: "#22252b",
@@ -63,6 +66,13 @@ module.exports = {
           300: "#16191d",
           400: "#121417",
           500: "#0e1012",
+        },
+        rarity: {
+          common: "#9ca3af",
+          uncommon: "#00cc52",
+          rare: "#457BFF",
+          epic: "#7b61ff",
+          legendary: "#ffba24",
         },
       },
     },

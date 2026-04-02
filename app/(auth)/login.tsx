@@ -20,7 +20,7 @@ export default function LoginScreen() {
 
   async function handleLogin() {
     if (!email || !password) {
-      Alert.alert("Oops!", "Du glemte e-post eller passord");
+      Alert.alert("Hei!", "Fyll inn e-post og passord");
       return;
     }
     setIsLoading(true);
@@ -34,30 +34,35 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-primary-500"
+      className="flex-1 bg-dark-300"
     >
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
       >
         <View className="items-center pt-20 pb-10 px-8">
-          <Text style={{ fontSize: 72 }}>🔌</Text>
-          <Text className="mt-3 text-5xl font-bold text-white tracking-tight">
+          <View className="flex-row gap-2 mb-4">
+            <Text className="text-4xl">{"\u{1F9D9}"}</Text>
+            <Text className="text-4xl">{"\u2694\uFE0F"}</Text>
+            <Text className="text-4xl">{"\u{1F33F}"}</Text>
+            <Text className="text-4xl">{"\u{1F5E1}\uFE0F"}</Text>
+          </View>
+          <Text className="font-pixel text-2xl text-primary-400">
             Unplug
           </Text>
-          <Text className="mt-2 text-base font-medium text-white/60">
-            Legg vekk telefonen. Tjen rewards.
+          <Text className="mt-2 text-base text-white/40">
+            Legg bort telefonen. Level up.
           </Text>
         </View>
 
-        <View className="flex-1 rounded-t-[36px] px-8 pt-10 pb-8 bg-dark-300">
-          <Text className="text-xl font-bold text-white mb-6">
-            Velkommen tilbake!
+        <View className="flex-1 px-8 pt-6 pb-8">
+          <Text className="font-pixel text-sm text-white mb-6">
+            Enter the Tower
           </Text>
 
           <View className="gap-4">
             <TextInput
-              className="rounded-2xl bg-dark-100 px-5 py-4 text-base text-white"
+              className="rounded-lg bg-dark-100 border-2 border-dark-50 px-5 py-4 text-base text-white"
               placeholder="E-post"
               placeholderTextColor="#555a62"
               value={email}
@@ -68,7 +73,7 @@ export default function LoginScreen() {
             />
 
             <TextInput
-              className="rounded-2xl bg-dark-100 px-5 py-4 text-base text-white"
+              className="rounded-lg bg-dark-100 border-2 border-dark-50 px-5 py-4 text-base text-white"
               placeholder="Passord"
               placeholderTextColor="#555a62"
               value={password}
@@ -78,18 +83,18 @@ export default function LoginScreen() {
             />
 
             <TouchableOpacity
-              className="mt-2 rounded-2xl bg-primary-500 py-5"
+              className="mt-2 rounded-lg bg-primary-500 border-2 border-primary-700 py-5"
               onPress={handleLogin}
               disabled={isLoading}
               activeOpacity={0.85}
             >
-              <Text className="text-center text-lg font-bold text-white">
-                {isLoading ? "Vent litt..." : "Let's go! 🚀"}
+              <Text className="text-center font-pixel text-sm text-white">
+                {isLoading ? "Vent..." : "Enter"}
               </Text>
             </TouchableOpacity>
 
             <View className="mt-4 flex-row justify-center gap-1">
-              <Text className="text-white/25 text-base">Ny her?</Text>
+              <Text className="text-white/25 text-base">Ny helt?</Text>
               <Link href="/(auth)/register" asChild>
                 <TouchableOpacity>
                   <Text className="font-bold text-primary-400 text-base">

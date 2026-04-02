@@ -12,7 +12,7 @@ import {
 import { router } from "expo-router";
 import { useAuth } from "@/lib/auth";
 
-export default function JoinFamilyScreen() {
+export default function JoinGuildScreen() {
   const { createFamily, joinFamily, signOut } = useAuth();
   const [mode, setMode] = useState<"choose" | "create" | "join">("choose");
   const [familyName, setFamilyName] = useState("");
@@ -26,15 +26,18 @@ export default function JoinFamilyScreen() {
       return;
     }
     setIsLoading(true);
-    const { error, inviteCode: code } = await createFamily(familyName, displayName);
+    const { error, inviteCode: code } = await createFamily(
+      familyName,
+      displayName
+    );
     setIsLoading(false);
     if (error) {
       Alert.alert("Feil", error.message);
     } else {
       Alert.alert(
-        "Familien er klar! 🏠",
-        `Invitasjonskode: ${code}\n\nSend den til resten av familien!`,
-        [{ text: "La oss gå!", onPress: () => router.replace("/(tabs)") }]
+        "Guildet er klart! \u{1F6E1}\u{FE0F}",
+        `Guild Code: ${code}\n\nDel den med resten av guildet!`,
+        [{ text: "La oss g\u00e5!", onPress: () => router.replace("/(tabs)") }]
       );
     }
   }
@@ -56,39 +59,43 @@ export default function JoinFamilyScreen() {
 
   if (mode === "choose") {
     return (
-      <View className="flex-1 bg-info-500 justify-center px-8">
+      <View className="flex-1 bg-dark-300 justify-center px-8">
         <View className="items-center mb-12">
-          <Text style={{ fontSize: 64 }}>👨‍👩‍👧‍👦</Text>
-          <Text className="mt-4 text-3xl font-bold text-white text-center">
-            Hvem unpluger{"\n"}du med?
+          <Text className="text-6xl">{"\u{1F6E1}\u{FE0F}"}</Text>
+          <Text className="font-pixel text-lg text-white text-center mt-4">
+            Velg ditt Guild
           </Text>
-          <Text className="mt-2 text-base text-white/50 text-center">
-            Unplug er best som team
+          <Text className="mt-2 text-base text-white/40 text-center">
+            Lag et nytt guild eller bli med i et
           </Text>
         </View>
 
         <View className="gap-4">
           <TouchableOpacity
-            className="rounded-2xl bg-white py-5"
+            className="rounded-lg bg-primary-500 border-2 border-primary-700 py-5"
             onPress={() => setMode("create")}
             activeOpacity={0.85}
           >
-            <Text className="text-center text-lg font-bold text-info-600">
-              Start nytt team 🚀
+            <Text className="text-center font-pixel text-sm text-white">
+              Lag nytt Guild
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="rounded-2xl border-2 border-white/30 py-5"
+            className="rounded-lg border-2 border-white/20 py-5"
             onPress={() => setMode("join")}
             activeOpacity={0.85}
           >
-            <Text className="text-center text-lg font-bold text-white">
-              Har en kode? Bli med 🎟️
+            <Text className="text-center font-pixel text-sm text-white">
+              Har Guild Code?
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity className="mt-6" onPress={signOut} activeOpacity={0.6}>
+          <TouchableOpacity
+            className="mt-6"
+            onPress={signOut}
+            activeOpacity={0.6}
+          >
             <Text className="text-center text-white/25">Logg ut</Text>
           </TouchableOpacity>
         </View>
@@ -99,30 +106,30 @@ export default function JoinFamilyScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-info-500"
+      className="flex-1 bg-dark-300"
     >
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
       >
         <View className="items-center pt-16 pb-6 px-8">
-          <Text style={{ fontSize: 52 }}>
-            {mode === "create" ? "🏠" : "🎟️"}
+          <Text className="text-5xl">
+            {mode === "create" ? "\u{1F3F0}" : "\u{1F511}"}
           </Text>
-          <Text className="mt-2 text-2xl font-bold text-white">
-            {mode === "create" ? "Lag teamet ditt" : "Skriv inn koden"}
+          <Text className="font-pixel text-sm text-white mt-3">
+            {mode === "create" ? "Lag ditt guild" : "Skriv inn Guild Code"}
           </Text>
         </View>
 
-        <View className="flex-1 rounded-t-[36px] px-8 pt-10 pb-8 bg-dark-300">
+        <View className="flex-1 px-8 pt-6 pb-8">
           <View className="gap-4">
             <View>
-              <Text className="mb-2 text-sm font-bold text-white/20 uppercase tracking-wider">
-                Hva heter du?
+              <Text className="font-pixel text-[10px] text-white/30 uppercase tracking-wider mb-2">
+                Heltenavn
               </Text>
               <TextInput
-                className="rounded-2xl bg-dark-100 px-5 py-4 text-base text-white"
-                placeholder="Skriv navnet ditt her..."
+                className="rounded-lg bg-dark-100 border-2 border-dark-50 px-5 py-4 text-base text-white"
+                placeholder="Hva heter helten din?"
                 placeholderTextColor="#555a62"
                 value={displayName}
                 onChangeText={setDisplayName}
@@ -131,12 +138,12 @@ export default function JoinFamilyScreen() {
 
             {mode === "create" ? (
               <View>
-                <Text className="mb-2 text-sm font-bold text-white/20 uppercase tracking-wider">
-                  Teamnavn
+                <Text className="font-pixel text-[10px] text-white/30 uppercase tracking-wider mb-2">
+                  Guild-navn
                 </Text>
                 <TextInput
-                  className="rounded-2xl bg-dark-100 px-5 py-4 text-base text-white"
-                  placeholder="F.eks. Team Nergaard"
+                  className="rounded-lg bg-dark-100 border-2 border-dark-50 px-5 py-4 text-base text-white"
+                  placeholder="F.eks. Dragon Slayers"
                   placeholderTextColor="#555a62"
                   value={familyName}
                   onChangeText={setFamilyName}
@@ -144,11 +151,11 @@ export default function JoinFamilyScreen() {
               </View>
             ) : (
               <View>
-                <Text className="mb-2 text-sm font-bold text-white/20 uppercase tracking-wider">
-                  Invitasjonskode
+                <Text className="font-pixel text-[10px] text-white/30 uppercase tracking-wider mb-2">
+                  Guild Code
                 </Text>
                 <TextInput
-                  className="rounded-2xl bg-dark-100 px-5 py-4 text-center text-2xl font-bold tracking-[8px] text-white"
+                  className="rounded-lg bg-dark-100 border-2 border-dark-50 px-5 py-4 text-center text-2xl font-bold tracking-[8px] text-accent-400"
                   placeholder="ABC123"
                   placeholderTextColor="#555a62"
                   value={inviteCode}
@@ -160,23 +167,29 @@ export default function JoinFamilyScreen() {
             )}
 
             <TouchableOpacity
-              className="mt-2 rounded-2xl bg-primary-500 py-5"
-              onPress={mode === "create" ? handleCreateFamily : handleJoinFamily}
+              className="mt-2 rounded-lg bg-primary-500 border-2 border-primary-700 py-5"
+              onPress={
+                mode === "create" ? handleCreateFamily : handleJoinFamily
+              }
               disabled={isLoading}
               activeOpacity={0.85}
             >
-              <Text className="text-center text-lg font-bold text-white">
+              <Text className="text-center font-pixel text-sm text-white">
                 {isLoading
-                  ? "Vent litt..."
+                  ? "Vent..."
                   : mode === "create"
-                    ? "Opprett team! 🎯"
-                    : "Bli med! 🙌"}
+                    ? "Opprett Guild"
+                    : "Bli med!"}
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className="mt-4" onPress={() => setMode("choose")} activeOpacity={0.6}>
-              <Text className="text-center font-semibold text-white/25">
-                ← Tilbake
+            <TouchableOpacity
+              className="mt-4"
+              onPress={() => setMode("choose")}
+              activeOpacity={0.6}
+            >
+              <Text className="text-center text-white/25">
+                {"\u2190"} Tilbake
               </Text>
             </TouchableOpacity>
           </View>

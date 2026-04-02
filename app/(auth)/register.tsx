@@ -21,11 +21,11 @@ export default function RegisterScreen() {
 
   async function handleRegister() {
     if (!email || !password) {
-      Alert.alert("Oops!", "Fyll inn alle feltene da vel");
+      Alert.alert("Hei!", "Fyll inn alle feltene");
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert("Hmm...", "Passordene matcher ikke. Prøv igjen!");
+      Alert.alert("Hmm...", "Passordene matcher ikke");
       return;
     }
     if (password.length < 6) {
@@ -39,8 +39,8 @@ export default function RegisterScreen() {
       Alert.alert("Noe gikk galt", error.message);
     } else {
       Alert.alert(
-        "Du er inne! 🎉",
-        "Sjekk e-posten din, eller bare logg rett inn.",
+        "Du er inne! \u2728",
+        "Sjekk e-posten din, eller logg rett inn.",
         [{ text: "Nice!", onPress: () => router.replace("/(auth)/join") }]
       );
     }
@@ -49,26 +49,26 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-accent-500"
+      className="flex-1 bg-dark-300"
     >
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
       >
         <View className="items-center pt-16 pb-6 px-8">
-          <Text style={{ fontSize: 56 }}>⚡</Text>
-          <Text className="mt-2 text-3xl font-bold text-white">
-            Bli en Unplugger
+          <Text className="text-5xl">{"\u2728"}</Text>
+          <Text className="font-pixel text-lg text-accent-400 mt-3">
+            Create Your Hero
           </Text>
-          <Text className="mt-1 text-base text-white/50">
-            Det tar 30 sekunder. Seriøst.
+          <Text className="mt-1 text-base text-white/40">
+            Det tar 30 sekunder.
           </Text>
         </View>
 
-        <View className="flex-1 rounded-t-[36px] px-8 pt-10 pb-8 bg-dark-300">
+        <View className="flex-1 px-8 pt-6 pb-8">
           <View className="gap-4">
             <TextInput
-              className="rounded-2xl bg-dark-100 px-5 py-4 text-base text-white"
+              className="rounded-lg bg-dark-100 border-2 border-dark-50 px-5 py-4 text-base text-white"
               placeholder="E-post"
               placeholderTextColor="#555a62"
               value={email}
@@ -79,7 +79,7 @@ export default function RegisterScreen() {
             />
 
             <TextInput
-              className="rounded-2xl bg-dark-100 px-5 py-4 text-base text-white"
+              className="rounded-lg bg-dark-100 border-2 border-dark-50 px-5 py-4 text-base text-white"
               placeholder="Lag et passord"
               placeholderTextColor="#555a62"
               value={password}
@@ -88,8 +88,8 @@ export default function RegisterScreen() {
             />
 
             <TextInput
-              className="rounded-2xl bg-dark-100 px-5 py-4 text-base text-white"
-              placeholder="Skriv passordet en gang til"
+              className="rounded-lg bg-dark-100 border-2 border-dark-50 px-5 py-4 text-base text-white"
+              placeholder="Bekreft passord"
               placeholderTextColor="#555a62"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -97,13 +97,13 @@ export default function RegisterScreen() {
             />
 
             <TouchableOpacity
-              className="mt-2 rounded-2xl bg-accent-500 py-5"
+              className="mt-2 rounded-lg bg-accent-500 border-2 border-accent-700 py-5"
               onPress={handleRegister}
               disabled={isLoading}
               activeOpacity={0.85}
             >
-              <Text className="text-center text-lg font-bold text-white">
-                {isLoading ? "Jobber med det..." : "Lag konto ⚡"}
+              <Text className="text-center font-pixel text-sm text-white">
+                {isLoading ? "Jobber..." : "Lag helt"}
               </Text>
             </TouchableOpacity>
 

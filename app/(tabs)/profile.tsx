@@ -3,23 +3,34 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useAuth } from "@/lib/auth";
 import { usePoints } from "@/hooks/usePoints";
-import { formatPoints } from "@/lib/points";
+import { getLevel, getWizardRank, CLASS_CONFIG } from "@/lib/wizard";
+import { PixelCard } from "@/components/ui/PixelCard";
+import { StatBadge } from "@/components/ui/StatBadge";
+import { WizardAvatar } from "@/components/wizard/WizardAvatar";
+import type { CharacterClass, AvatarConfig } from "@/lib/database.types";
 
-function getLevel(total: number): { level: number; name: string; emoji: string } {
-  if (total >= 5000) return { level: 5, name: "Legend", emoji: "👑" };
-  if (total >= 2500) return { level: 4, name: "Master", emoji: "💎" };
-  if (total >= 1000) return { level: 3, name: "Pro", emoji: "🔥" };
-  if (total >= 300) return { level: 2, name: "Rising", emoji: "⚡" };
-  return { level: 1, name: "Rookie", emoji: "🌱" };
-}
+const DEFAULT_AVATAR: AvatarConfig = {
+  body_color: "blue",
+  hat: null,
+  robe: null,
+  staff: null,
+  familiar: null,
+};
 
-export default function ProfileScreen() {
+export default function CharacterSheetScreen() {
   const { profile, family, signOut } = useAuth();
   const points = usePoints();
+
   const level = getLevel(points.total);
+  const rank = getWizardRank(level);
+  const characterClass: CharacterClass =
+    (profile as any)?.character_class ?? "wizard";
+  const avatarConfig: AvatarConfig =
+    (profile as any)?.avatar_config ?? DEFAULT_AVATAR;
+  const classInfo = CLASS_CONFIG[characterClass];
 
   function handleSignOut() {
-    Alert.alert("Logg ut", "Sikker på at du vil stikke?", [
+    Alert.alert("Logg ut", "Forlate t\u00e5rnet?", [
       { text: "Nei", style: "cancel" },
       { text: "Ja, logg ut", style: "destructive", onPress: signOut },
     ]);
@@ -29,89 +40,106 @@ export default function ProfileScreen() {
     <SafeAreaView className="flex-1 bg-dark-300">
       <ScrollView className="flex-1">
         {/* Hero */}
-        <View className="items-center px-6 pt-6 pb-6">
-          <View className="h-24 w-24 items-center justify-center rounded-full bg-primary-500/20 border-2 border-primary-500/30">
-            <Text className="text-4xl font-bold text-primary-400">
-              {profile?.display_name?.charAt(0)?.toUpperCase() ?? "?"}
-            </Text>
-          </View>
+        <View className="items-center px-6 pt-6 pb-4">
+          <WizardAvatar
+            config={avatarConfig}
+            characterClass={characterClass}
+            size="xl"
+          />
           <Text className="mt-4 text-2xl font-bold text-white">
             {profile?.display_name}
           </Text>
-          <View className="mt-2 rounded-full bg-dark-100 px-4 py-1.5">
+          <Text className="font-pixel text-sm text-accent-400 mt-1">
+            {rank.name}
+          </Text>
+          <View className="flex-row items-center gap-2 mt-1">
             <Text className="text-sm text-white/30">
-              {profile?.role === "parent" ? "Forelder" : "Barn"}
+              Level {level}
             </Text>
-          </View>
-
-          {/* Level badge */}
-          <View className="mt-5 rounded-2xl bg-accent-500/15 border border-accent-500/20 px-8 py-4 items-center">
-            <Text style={{ fontSize: 32 }}>{level.emoji}</Text>
-            <Text className="mt-1 text-base font-bold text-accent-400">
-              Level {level.level} — {level.name}
+            <Text className="text-sm">
+              {classInfo.emoji}
             </Text>
-            <Text className="text-sm text-white/25">
-              {formatPoints(points.total)} Plugs totalt
+            <Text className="text-sm text-white/30">
+              {classInfo.nameNorwegian}
             </Text>
           </View>
         </View>
 
         {/* Stats */}
-        <View className="flex-row gap-3 px-6">
-          <View className="flex-1 items-center rounded-2xl bg-primary-500/10 p-5">
-            <Text className="text-2xl font-bold text-primary-400">
-              {formatPoints(points.total)}
-            </Text>
-            <Text className="text-[10px] font-bold text-white/20 uppercase tracking-wider mt-1">
-              Plugs
-            </Text>
-          </View>
-          <View className="flex-1 items-center rounded-2xl bg-danger-500/10 p-5">
-            <Text className="text-2xl font-bold text-danger-500">
-              {points.streak}🔥
-            </Text>
-            <Text className="text-[10px] font-bold text-white/20 uppercase tracking-wider mt-1">
-              Streak
-            </Text>
-          </View>
+        <View className="flex-row gap-3 px-6 mt-2">
+          <StatBadge
+            icon={"\u2728"}
+            value={points.total}
+            label="Mana"
+            color="accent"
+          />
+          <StatBadge
+            icon={"\u{1F525}"}
+            value={points.streak}
+            label="Streak"
+            color="danger"
+          />
+          <StatBadge
+            icon={"\u{1F3AF}"}
+            value={level}
+            label="Level"
+            color="primary"
+          />
         </View>
 
-        {/* Family info */}
-        <View className="mt-6 mx-6 rounded-2xl bg-dark-100 overflow-hidden">
-          <View className="border-b border-dark-50 px-5 py-4">
-            <Text className="text-[10px] font-bold text-white/20 uppercase tracking-wider">
-              Team
-            </Text>
-            <Text className="mt-1 text-base font-bold text-white">
-              {family?.name}
-            </Text>
+        {/* Class info */}
+        <PixelCard className="mx-6 mt-5">
+          <Text className="font-pixel text-[10px] text-white/30 uppercase tracking-wider mb-2">
+            Klasse
+          </Text>
+          <View className="flex-row items-center">
+            <Text className="text-3xl mr-3">{classInfo.emoji}</Text>
+            <View className="flex-1">
+              <Text className="font-bold text-white">
+                {classInfo.nameNorwegian}
+              </Text>
+              <Text className="text-sm text-white/40 mt-0.5">
+                {classInfo.description}
+              </Text>
+              <Text className="text-xs text-white/25 mt-0.5">
+                Damage: {classInfo.damageMult}x
+              </Text>
+            </View>
           </View>
-          <View className="border-b border-dark-50 px-5 py-4">
-            <Text className="text-[10px] font-bold text-white/20 uppercase tracking-wider">
-              Invitasjonskode
-            </Text>
-            <Text className="mt-1 text-xl font-bold tracking-[6px] text-accent-400">
+        </PixelCard>
+
+        {/* Guild info */}
+        <PixelCard className="mx-6 mt-4">
+          <Text className="font-pixel text-[10px] text-white/30 uppercase tracking-wider mb-2">
+            Guild
+          </Text>
+          <Text className="text-base font-bold text-white">
+            {"\u{1F6E1}\u{FE0F}"} {family?.name}
+          </Text>
+          <View className="flex-row items-center mt-2">
+            <Text className="text-xs text-white/30 mr-2">Guild Code:</Text>
+            <Text className="font-pixel text-sm tracking-[4px] text-accent-400">
               {family?.invite_code}
             </Text>
           </View>
 
           {profile?.role === "parent" && (
             <TouchableOpacity
-              className="px-5 py-4"
+              className="mt-3 rounded-md bg-primary-500/15 border border-primary-500/20 py-3"
               onPress={() => router.push("/(admin)/settings")}
               activeOpacity={0.7}
             >
-              <Text className="font-bold text-primary-400 text-base">
-                Familieinnstillinger →
+              <Text className="text-center font-pixel text-[10px] text-primary-400">
+                Guild Master Settings
               </Text>
             </TouchableOpacity>
           )}
-        </View>
+        </PixelCard>
 
         {/* Sign out */}
         <View className="px-6 mt-8 pb-10">
           <TouchableOpacity
-            className="rounded-2xl bg-danger-500/10 border border-danger-500/15 py-4"
+            className="rounded-lg bg-danger-500/10 border-2 border-danger-500/15 py-4"
             onPress={handleSignOut}
             activeOpacity={0.7}
           >

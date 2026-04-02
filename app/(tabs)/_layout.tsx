@@ -1,6 +1,7 @@
 import { Tabs, Redirect } from "expo-router";
 import { View, Text, ActivityIndicator } from "react-native";
 import { useAuth } from "@/lib/auth";
+import { Colors, Brand } from "@/constants/Colors";
 
 export default function TabLayout() {
   const { session, profile, isLoading } = useAuth();
@@ -8,8 +9,10 @@ export default function TabLayout() {
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-dark-300">
-        <Text style={{ fontSize: 44 }}>🔌</Text>
-        <ActivityIndicator size="large" color="#00cc52" className="mt-4" />
+        <Text className="font-pixel text-2xl text-primary-400 mb-4">
+          Unplug
+        </Text>
+        <ActivityIndicator size="large" color={Brand.manaGreen} />
       </View>
     );
   }
@@ -21,46 +24,63 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#00cc52",
-        tabBarInactiveTintColor: "#555a62",
+        tabBarActiveTintColor: Brand.manaGreen,
+        tabBarInactiveTintColor: Colors.textMuted,
         tabBarStyle: {
-          backgroundColor: "#16191d",
+          backgroundColor: Brand.dungeonDark,
           borderTopColor: "#22252b",
           paddingBottom: 4,
           height: 88,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "700",
+          fontFamily: "PressStart2P",
+          fontSize: 8,
         },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Hjem",
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🔌" focused={focused} />,
+          title: "T\u00e5rnet",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="\u{1F3F0}" focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="activities"
         options={{
-          title: "Go!",
-          tabBarIcon: ({ focused }) => <TabIcon emoji="⚡" focused={focused} />,
+          title: "Quests",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="\u{1F4DC}" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="dungeon"
+        options={{
+          title: "Dungeon",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="\u{1F409}" focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="leaderboard"
         options={{
-          title: "Topp",
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏆" focused={focused} />,
+          title: "Guild",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="\u{1F6E1}\u{FE0F}" focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Meg",
-          tabBarIcon: ({ focused }) => <TabIcon emoji="😊" focused={focused} />,
+          title: "Helt",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="\u{2694}\u{FE0F}" focused={focused} />
+          ),
         }}
       />
     </Tabs>
@@ -69,8 +89,6 @@ export default function TabLayout() {
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
   return (
-    <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.35 }}>
-      {emoji}
-    </Text>
+    <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.35 }}>{emoji}</Text>
   );
 }
