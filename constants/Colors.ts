@@ -1,26 +1,27 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
+// Unplug brand colors – see BRAND.md for full guidelines
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+export const Brand = {
+  green: '#2DC653',   // Primary – CTA buttons, active elements
+  red: '#E63946',     // Energy – streaks, alerts
+  blue: '#457BFF',    // Secondary – links, info
+  yellow: '#FFD166',  // Rewards – Plugs currency, badges
+};
 
 export const Colors = {
   light: {
     text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
+    background: '#F8F9FA',
+    tint: Brand.green,
     icon: '#687076',
     tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    tabIconSelected: Brand.green,
   },
   dark: {
     text: '#ECEDEE',
     background: '#151718',
-    tint: tintColorDark,
+    tint: Brand.green,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    tabIconSelected: Brand.green,
   },
 };
