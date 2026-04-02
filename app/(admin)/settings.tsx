@@ -3,76 +3,98 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useAuth } from "@/lib/auth";
 import { useFamily } from "@/hooks/useFamily";
+import { PixelCard } from "@/components/ui/PixelCard";
+import { WizardAvatar } from "@/components/wizard/WizardAvatar";
+import type { AvatarConfig, CharacterClass } from "@/lib/database.types";
 
-export default function SettingsScreen() {
+const DEFAULT_AVATAR: AvatarConfig = {
+  body_color: "blue",
+  hat: null,
+  robe: null,
+  staff: null,
+  familiar: null,
+};
+
+export default function GuildMasterScreen() {
   const { family } = useAuth();
   const { members } = useFamily();
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="flex-1 px-6 pt-4">
+    <SafeAreaView className="flex-1 bg-dark-300">
+      <View className="flex-1 px-5 pt-4">
         <View className="flex-row items-center gap-3 mb-6">
           <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-2xl text-primary-600">←</Text>
+            <Text className="text-2xl text-primary-400">
+              {"\u2190"}
+            </Text>
           </TouchableOpacity>
-          <Text className="text-2xl font-bold text-gray-900">
-            Innstillinger
+          <Text className="font-pixel text-sm text-white">
+            Guild Master
           </Text>
         </View>
 
-        <View className="rounded-2xl bg-white shadow-sm">
-          <View className="border-b border-gray-100 px-4 py-4">
-            <Text className="text-sm text-gray-500">Familienavn</Text>
-            <Text className="mt-0.5 text-lg font-semibold text-gray-900">
-              {family?.name}
-            </Text>
-          </View>
-          <View className="border-b border-gray-100 px-4 py-4">
-            <Text className="text-sm text-gray-500">Invitasjonskode</Text>
-            <Text className="mt-0.5 font-mono text-2xl font-bold tracking-widest text-primary-600">
-              {family?.invite_code}
-            </Text>
-            <Text className="mt-1 text-xs text-gray-400">
-              Del denne koden med familiemedlemmer
-            </Text>
-          </View>
-        </View>
+        <PixelCard className="mb-4">
+          <Text className="font-pixel text-[10px] text-white/30 uppercase tracking-wider mb-2">
+            Guild-navn
+          </Text>
+          <Text className="text-lg font-bold text-white">
+            {"\u{1F6E1}\u{FE0F}"} {family?.name}
+          </Text>
+        </PixelCard>
 
-        <Text className="mt-6 mb-3 text-lg font-semibold text-gray-900">
-          Familiemedlemmer ({members.length})
+        <PixelCard className="mb-4">
+          <Text className="font-pixel text-[10px] text-white/30 uppercase tracking-wider mb-2">
+            Guild Code
+          </Text>
+          <Text className="font-pixel text-xl tracking-[6px] text-accent-400">
+            {family?.invite_code}
+          </Text>
+          <Text className="mt-1 text-xs text-white/25">
+            Del denne koden for \u00e5 invitere nye medlemmer
+          </Text>
+        </PixelCard>
+
+        <Text className="font-pixel text-[10px] text-white/30 uppercase tracking-wider mt-4 mb-3">
+          Medlemmer ({members.length})
         </Text>
-        <View className="rounded-2xl bg-white shadow-sm">
+        <PixelCard>
           {members.map((member, index) => (
             <View
               key={member.id}
-              className={`flex-row items-center px-4 py-3 ${
-                index < members.length - 1 ? "border-b border-gray-100" : ""
+              className={`flex-row items-center py-3 ${
+                index < members.length - 1
+                  ? "border-b border-dark-50"
+                  : ""
               }`}
             >
-              <View className="h-10 w-10 items-center justify-center rounded-full bg-primary-100">
-                <Text className="font-bold text-primary-700">
-                  {member.display_name.charAt(0).toUpperCase()}
-                </Text>
-              </View>
+              <WizardAvatar
+                config={(member as any).avatar_config ?? DEFAULT_AVATAR}
+                characterClass={
+                  ((member as any).character_class as CharacterClass) ?? "wizard"
+                }
+                size="sm"
+              />
               <View className="ml-3 flex-1">
-                <Text className="font-medium text-gray-900">
+                <Text className="font-bold text-white">
                   {member.display_name}
                 </Text>
-                <Text className="text-xs text-gray-400">
-                  {member.role === "parent" ? "Forelder" : "Barn"}
+                <Text className="text-xs text-white/30">
+                  {member.role === "parent"
+                    ? "Guild Master"
+                    : "Medlem"}
                 </Text>
               </View>
             </View>
           ))}
-        </View>
+        </PixelCard>
 
         <TouchableOpacity
-          className="mt-6 rounded-xl bg-primary-50 border border-primary-200 py-4"
+          className="mt-6 rounded-lg bg-primary-500/15 border-2 border-primary-500/20 py-4"
           onPress={() => router.push("/(admin)/activity-types")}
           activeOpacity={0.7}
         >
-          <Text className="text-center font-semibold text-primary-700">
-            Administrer aktivitetstyper →
+          <Text className="text-center font-pixel text-[10px] text-primary-400">
+            Quest Types {"\u2192"}
           </Text>
         </TouchableOpacity>
       </View>

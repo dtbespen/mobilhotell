@@ -3,14 +3,25 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { useFonts, PressStart2P_400Regular } from "@expo-google-fonts/press-start-2p";
 import { AuthProvider } from "@/lib/auth";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    PressStart2P: PressStart2P_400Regular,
+  });
+
   useEffect(() => {
-    SplashScreen.hideAsync();
-  }, []);
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <AuthProvider>
@@ -20,7 +31,7 @@ export default function RootLayout() {
         <Stack.Screen name="(admin)" />
         <Stack.Screen name="+not-found" />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
     </AuthProvider>
   );
 }
