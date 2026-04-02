@@ -41,9 +41,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "T\u00e5rnet",
+          title: "Hjem",
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="\u{1F3F0}" focused={focused} />
+            <TabIcon emoji={"\u{1F3F0}"} focused={focused} />
           ),
         }}
       />
@@ -52,68 +52,26 @@ export default function TabLayout() {
         options={{
           title: "Quests",
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="\u{1F4DC}" focused={focused} />
+            <TabIcon emoji={"\u{1F4DC}"} focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
-        name="season"
-        options={{
-          title: "Season",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="\u{2744}\u{FE0F}" focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="dungeon"
-        options={{
-          title: "Dungeon",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="\u{1F409}" focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="skills"
-        options={{
-          title: "Skills",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="\u{2728}" focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="rewards"
-        options={{
-          title: "Rewards",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji={"\u2B50"} focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Helt",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="\u{2694}\u{FE0F}" focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="leaderboard"
+        name="guild"
         options={{
           title: "Guild",
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="\u{1F6E1}\u{FE0F}" focused={focused} />
+            <TabIcon emoji={"\u{1F6E1}\u{FE0F}"} focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
-        name="demo"
+        name="character"
         options={{
-          href: null,
+          title: "Helten",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji={"\u{2694}\u{FE0F}"} focused={focused} />
+          ),
         }}
       />
     </Tabs>

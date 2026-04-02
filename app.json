@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.mobilhotell.app"
+      "bundleIdentifier": "com.mobilhotell.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {

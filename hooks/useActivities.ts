@@ -2,7 +2,17 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { calculateMana, type ManaBreakdown, type SessionContext } from "@/lib/manaEngine";
-import type { Activity, ActivityType, ActivityCategory } from "@/lib/database.types";
+import type { Activity, ActivityType, ActivityCategory, AvatarConfig } from "@/lib/database.types";
+
+function getProfileManaBonus(profile: any): number {
+  const config: AvatarConfig | null = profile?.avatar_config;
+  if (!config) return 0;
+  const equipped = [config.hat, config.armor, config.cape, config.weapon, config.shield, config.familiar];
+  const equippedCount = equipped.filter(Boolean).length;
+  if (equippedCount >= 5) return 15;
+  if (equippedCount >= 3) return 10;
+  return equippedCount * 2;
+}
 
 export function useActivities() {
   const { profile, family } = useAuth();
@@ -91,12 +101,13 @@ export function useActivities() {
 
     const todaySessions = getTodaySessions(activities, activeActivity.id);
     const category: ActivityCategory = activeActivity.activity_type?.category ?? "screen_free";
+    const equipmentBonus = getProfileManaBonus(profile);
     const breakdown = calculateMana({
       durationMinutes,
       category,
       todaySessions,
       currentStreak: 0,
-      equipmentManaBonus: 0,
+      equipmentManaBonus: equipmentBonus,
     });
 
     const { error } = await supabase
@@ -125,12 +136,13 @@ export function useActivities() {
     if (!profile) return { error: new Error("Ingen profil") };
 
     const todaySessions = getTodaySessions(activities);
+    const equipmentBonus = getProfileManaBonus(profile);
     const breakdown = calculateMana({
       durationMinutes,
       category: activityType.category,
       todaySessions,
       currentStreak: 0,
-      equipmentManaBonus: 0,
+      equipmentManaBonus: equipmentBonus,
     });
 
     const now = new Date();

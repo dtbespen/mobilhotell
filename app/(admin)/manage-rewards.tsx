@@ -33,6 +33,7 @@ export default function ManageRewardsScreen() {
   const [newCost, setNewCost] = useState("10");
   const [newCategory, setNewCategory] = useState<GuildRewardCategory>("custom");
   const [newEmoji, setNewEmoji] = useState("\u2728");
+  const [newIsPersonal, setNewIsPersonal] = useState(false);
 
   async function handleCreate() {
     if (!newName.trim()) {
@@ -47,6 +48,7 @@ export default function ManageRewardsScreen() {
       category: newCategory,
       emoji: newEmoji,
       isRepeatable: true,
+      isPersonal: newIsPersonal,
     });
 
     if (error) {
@@ -56,6 +58,7 @@ export default function ManageRewardsScreen() {
       setNewName("");
       setNewDescription("");
       setNewCost("10");
+      setNewIsPersonal(false);
       Alert.alert("\u2705", "Belonning opprettet!");
     }
   }
@@ -170,7 +173,18 @@ export default function ManageRewardsScreen() {
                 <Text className="text-2xl mr-3">{reward.emoji}</Text>
                 <View className="flex-1">
                   <Text className="font-bold text-white">{reward.name}</Text>
-                  <Text className="text-xs text-white/30">{reward.star_cost} {"\u2B50"}</Text>
+                  <View className="flex-row items-center gap-2 mt-0.5">
+                    <Text className="text-xs text-white/30">{reward.star_cost} ⭐</Text>
+                    <View className={`rounded px-1.5 py-0.5 ${
+                      (reward as any).is_personal ? "bg-accent-500/20" : "bg-primary-500/20"
+                    }`}>
+                      <Text className={`font-pixel text-[6px] ${
+                        (reward as any).is_personal ? "text-accent-400" : "text-primary-400"
+                      }`}>
+                        {(reward as any).is_personal ? "Personlig" : "Familie"}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
                 <TouchableOpacity
                   onPress={() => handleToggleReward(reward.id, reward.is_active)}
@@ -265,6 +279,34 @@ export default function ManageRewardsScreen() {
               className="bg-dark-200 border-2 border-dark-50 rounded-lg px-4 py-3 text-white font-pixel mb-3"
               placeholderTextColor="rgba(255,255,255,0.2)"
             />
+
+            <Text className="text-xs text-white/30 mb-2">Type belønning</Text>
+            <View className="flex-row gap-2 mb-4">
+              <TouchableOpacity
+                onPress={() => setNewIsPersonal(false)}
+                className={`flex-1 rounded-lg border-2 py-3 items-center ${
+                  !newIsPersonal
+                    ? "bg-primary-500/15 border-primary-500/40"
+                    : "bg-dark-200 border-dark-50"
+                }`}
+              >
+                <Text className="text-lg">🛡️</Text>
+                <Text className="font-pixel text-[7px] text-white/60 mt-1">Familie</Text>
+                <Text className="text-[9px] text-white/30 mt-0.5 text-center">Delt pool</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setNewIsPersonal(true)}
+                className={`flex-1 rounded-lg border-2 py-3 items-center ${
+                  newIsPersonal
+                    ? "bg-accent-500/15 border-accent-500/40"
+                    : "bg-dark-200 border-dark-50"
+                }`}
+              >
+                <Text className="text-lg">⭐</Text>
+                <Text className="font-pixel text-[7px] text-white/60 mt-1">Personlig</Text>
+                <Text className="text-[9px] text-white/30 mt-0.5 text-center">Egne stjerner</Text>
+              </TouchableOpacity>
+            </View>
 
             <Text className="text-xs text-white/30 mb-2">Kategori</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">

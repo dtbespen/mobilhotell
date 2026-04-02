@@ -6,6 +6,7 @@ import { CLASS_CONFIG, type CharacterClass } from "@/lib/wizard";
 interface ClassPickerProps {
   onSelect: (characterClass: CharacterClass) => void;
   initialClass?: CharacterClass;
+  currentClass?: CharacterClass;
 }
 
 const classes: CharacterClass[] = ["wizard", "knight", "druid", "rogue"];
@@ -24,9 +25,9 @@ const classBgColor: Record<CharacterClass, string> = {
   rogue: "bg-accent-500/10",
 };
 
-export function ClassPicker({ onSelect, initialClass }: ClassPickerProps) {
+export function ClassPicker({ onSelect, initialClass, currentClass }: ClassPickerProps) {
   const [selected, setSelected] = useState<CharacterClass | null>(
-    initialClass ?? null
+    currentClass ?? initialClass ?? null
   );
 
   function handleSelect(cls: CharacterClass) {

@@ -1,13 +1,14 @@
-import { View, Text, ScrollView, RefreshControl, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, RefreshControl, TouchableOpacity, Alert } from "react-native";
 import { useState, useCallback, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useAuth } from "@/lib/auth";
 import { usePoints } from "@/hooks/usePoints";
 import { useActivities } from "@/hooks/useActivities";
+import { useDailyLogin } from "@/hooks/useDailyLogin";
+import { useDungeon } from "@/hooks/useDungeon";
 import { formatDuration } from "@/lib/points";
 import { getLevel, getManaForNextLevel, getWizardRank, CLASS_CONFIG, getUnlocksForLevel } from "@/lib/wizard";
-import { getLoginReward } from "@/lib/dailyLogin";
 import { buildSeasonTiers, getTierForXp } from "@/lib/seasonPass";
 import { getStreakFlameEmoji, isManaCapped, DAILY_MANA_CAP } from "@/lib/streakManager";
 import { useGuildStars } from "@/hooks/useGuildStars";
@@ -15,6 +16,7 @@ import { Brand } from "@/constants/Colors";
 import { PixelCard } from "@/components/ui/PixelCard";
 import { ManaBar } from "@/components/ui/ManaBar";
 import { StatBadge } from "@/components/ui/StatBadge";
+import { HPBar } from "@/components/ui/HPBar";
 import { CharacterRenderer } from "@/components/wizard/CharacterRenderer";
 import type { CharacterClass, AvatarConfig } from "@/lib/database.types";
 
@@ -41,6 +43,8 @@ export default function WizardTowerScreen() {
   const { profile, family } = useAuth();
   const points = usePoints();
   const { activities, activeActivity } = useActivities();
+  const dailyLogin = useDailyLogin();
+  const { dungeon, remainingHp, daysRemaining } = useDungeon();
   const { currentStars } = useGuildStars();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -64,10 +68,9 @@ export default function WizardTowerScreen() {
   const classInfo = CLASS_CONFIG[characterClass];
 
   const loginStreak = (profile as any)?.login_streak ?? points.streak;
-  const loginReward = getLoginReward(loginStreak || 1);
 
   const seasonTiers = useMemo(() => buildSeasonTiers(), []);
-  const seasonTier = getTierForXp(0, seasonTiers);
+  const seasonTier = getTierForXp(points.total, seasonTiers);
 
   return (
     <SafeAreaView className="flex-1 bg-dark-300">
@@ -137,28 +140,72 @@ export default function WizardTowerScreen() {
         )}
 
         {/* Daily login reward */}
-        <PixelCard className="mx-6 mt-3">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center">
-              <Text className="text-lg mr-2">{"\uD83C\uDF81"}</Text>
-              <View>
-                <Text className="font-pixel text-[9px] text-primary-400">
-                  Daglig belonning
-                </Text>
-                <Text className="text-xs text-white/30">
-                  Dag {loginStreak || 1}: +{loginReward.mana} mana
-                  {loginReward.bonusType === "item" ? ` + ${loginReward.bonusLabel}` : ""}
+        <TouchableOpacity
+          onPress={async () => {
+            if (dailyLogin.isClaimed) return;
+            const result = await dailyLogin.claimReward();
+            if (result.error) {
+              Alert.alert("Feil", typeof result.error === "string" ? result.error : "Noe gikk galt");
+            } else {
+              Alert.alert("\uD83C\uDF81 Daglig belonning!", `+${result.mana} Mana!`);
+            }
+          }}
+          activeOpacity={dailyLogin.isClaimed ? 1 : 0.7}
+        >
+          <PixelCard className="mx-6 mt-3">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <Text className="text-lg mr-2">{"\uD83C\uDF81"}</Text>
+                <View>
+                  <Text className="font-pixel text-[9px] text-primary-400">
+                    Daglig belonning
+                  </Text>
+                  <Text className="text-xs text-white/30">
+                    Dag {loginStreak || 1}: +{dailyLogin.reward?.mana ?? 0} mana
+                    {dailyLogin.reward?.bonusType === "item" ? ` + ${dailyLogin.reward.bonusLabel}` : ""}
+                  </Text>
+                </View>
+              </View>
+              <View className={`rounded-lg px-3 py-1.5 ${
+                dailyLogin.isClaimed
+                  ? "bg-primary-500/10 border border-primary-500/10"
+                  : "bg-primary-500/20 border border-primary-500/30"
+              }`}>
+                <Text className={`font-pixel text-[8px] ${
+                  dailyLogin.isClaimed ? "text-primary-400/30" : "text-primary-400"
+                }`}>
+                  {dailyLogin.isClaimed ? "\u2713 Hentet" : "Hent"}
                 </Text>
               </View>
             </View>
-            <View className="bg-primary-500/20 border border-primary-500/30 rounded-lg px-3 py-1.5">
-              <Text className="font-pixel text-[8px] text-primary-400">Hent</Text>
-            </View>
-          </View>
-        </PixelCard>
+          </PixelCard>
+        </TouchableOpacity>
+
+        {/* Dungeon mini */}
+        {dungeon && (
+          <TouchableOpacity onPress={() => router.push("/(tabs)/guild")} activeOpacity={0.7}>
+            <PixelCard className="mx-6 mt-3">
+              <View className="flex-row items-center justify-between mb-2">
+                <View className="flex-row items-center">
+                  <Text className="text-lg mr-2">{"\uD83D\uDC09"}</Text>
+                  <View>
+                    <Text className="font-pixel text-[9px] text-danger-400">
+                      {dungeon.boss_name}
+                    </Text>
+                    <Text className="text-xs text-white/30">
+                      {daysRemaining}d igjen
+                    </Text>
+                  </View>
+                </View>
+                <Text className="text-white/20">{"\u2192"}</Text>
+              </View>
+              <HPBar hp={remainingHp} maxHp={dungeon.boss_hp} size="sm" />
+            </PixelCard>
+          </TouchableOpacity>
+        )}
 
         {/* Season progress mini */}
-        <TouchableOpacity onPress={() => router.push("/(tabs)/season")} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/character")} activeOpacity={0.7}>
           <PixelCard className="mx-6 mt-3">
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center">
@@ -208,7 +255,7 @@ export default function WizardTowerScreen() {
 
         {/* Guild Stars shortcut */}
         <TouchableOpacity
-          onPress={() => router.push("/(tabs)/rewards")}
+          onPress={() => router.push("/(tabs)/guild")}
           activeOpacity={0.7}
         >
           <PixelCard className="mx-6 mt-3">

@@ -92,15 +92,27 @@ export default function GuildMasterScreen() {
           ))}
         </PixelCard>
 
-        <TouchableOpacity
-          className="mt-6 rounded-lg bg-primary-500/15 border-2 border-primary-500/20 py-4"
-          onPress={() => router.push("/(admin)/activity-types")}
-          activeOpacity={0.7}
-        >
-          <Text className="text-center font-pixel text-[10px] text-primary-400">
-            Quest Types {"\u2192"}
-          </Text>
-        </TouchableOpacity>
+        <View className="gap-3 mt-6">
+          <TouchableOpacity
+            className="rounded-lg bg-primary-500/15 border-2 border-primary-500/20 py-4"
+            onPress={() => router.push("/(admin)/activity-types")}
+            activeOpacity={0.7}
+          >
+            <Text className="text-center font-pixel text-[10px] text-primary-400">
+              {"\u{1F4DC}"} Quest Types {"\u2192"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="rounded-lg bg-accent-500/15 border-2 border-accent-500/20 py-4"
+            onPress={() => router.push("/(admin)/manage-rewards")}
+            activeOpacity={0.7}
+          >
+            <Text className="text-center font-pixel text-[10px] text-accent-400">
+              {"\u2B50"} Administrer belønninger {"\u2192"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );

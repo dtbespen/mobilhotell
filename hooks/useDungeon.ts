@@ -21,8 +21,12 @@ export function useDungeon() {
   useEffect(() => {
     if (!dungeon || !familyId) return;
 
+    const channelName = `dungeon-${dungeon.id}-${familyId}`;
+    const existing = supabase.getChannels().find((ch) => ch.topic === `realtime:${channelName}`);
+    if (existing) supabase.removeChannel(existing);
+
     const channel = supabase
-      .channel(`dungeon-${dungeon.id}-${familyId}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {

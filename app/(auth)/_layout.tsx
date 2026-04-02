@@ -9,10 +9,12 @@ export default function AuthLayout() {
   useEffect(() => {
     if (isLoading) return;
     if (session) {
-      if (profile?.family_id) {
-        router.replace("/(tabs)");
-      } else {
+      if (!profile?.family_id) {
         router.replace("/(auth)/join");
+      } else if (!(profile as any)?.character_class) {
+        router.replace("/(auth)/create-character");
+      } else {
+        router.replace("/(tabs)");
       }
     }
   }, [session, profile, isLoading]);

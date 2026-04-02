@@ -43,8 +43,12 @@ export function useGuildRewards() {
   useEffect(() => {
     if (!familyId) return;
 
+    const channelName = `reward-claims-${familyId}`;
+    const existing = supabase.getChannels().find((ch) => ch.topic === `realtime:${channelName}`);
+    if (existing) supabase.removeChannel(existing);
+
     const channel = supabase
-      .channel(`reward-claims-${familyId}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
@@ -69,6 +73,7 @@ export function useGuildRewards() {
     category: string;
     emoji: string;
     isRepeatable: boolean;
+    isPersonal?: boolean;
   }) {
     if (!familyId || !profile?.id) return { error: "Not ready" };
 
@@ -82,6 +87,7 @@ export function useGuildRewards() {
         category: reward.category,
         emoji: reward.emoji,
         is_repeatable: reward.isRepeatable,
+        is_personal: reward.isPersonal ?? false,
         created_by: profile.id,
       })
       .select()
