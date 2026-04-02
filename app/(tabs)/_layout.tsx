@@ -7,8 +7,9 @@ export default function TabLayout() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#3b82f6" />
+      <View className="flex-1 items-center justify-center bg-dark-300">
+        <Text style={{ fontSize: 44 }}>🔌</Text>
+        <ActivityIndicator size="large" color="#00cc52" className="mt-4" />
       </View>
     );
   }
@@ -20,17 +21,17 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#3b82f6",
-        tabBarInactiveTintColor: "#9ca3af",
+        tabBarActiveTintColor: "#00cc52",
+        tabBarInactiveTintColor: "#555a62",
         tabBarStyle: {
-          backgroundColor: "#ffffff",
-          borderTopColor: "#f3f4f6",
+          backgroundColor: "#16191d",
+          borderTopColor: "#22252b",
           paddingBottom: 4,
           height: 88,
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: "600",
+          fontWeight: "700",
         },
       }}
     >
@@ -38,42 +39,37 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Hjem",
-          tabBarIcon: ({ color }) => <TabIcon emoji="🏠" color={color} />,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🔌" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="activities"
         options={{
-          title: "Aktiviteter",
-          tabBarIcon: ({ color }) => <TabIcon emoji="⚡" color={color} />,
+          title: "Go!",
+          tabBarIcon: ({ focused }) => <TabIcon emoji="⚡" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="leaderboard"
         options={{
-          title: "Poengtavle",
-          tabBarIcon: ({ color }) => <TabIcon emoji="🏆" color={color} />,
+          title: "Topp",
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🏆" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profil",
-          tabBarIcon: ({ color }) => <TabIcon emoji="👤" color={color} />,
+          title: "Meg",
+          tabBarIcon: ({ focused }) => <TabIcon emoji="😊" focused={focused} />,
         }}
       />
     </Tabs>
   );
 }
 
-function TabIcon({ emoji, color }: { emoji: string; color: string }) {
+function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
   return (
-    <Text
-      style={{
-        fontSize: 22,
-        opacity: color === "#3b82f6" ? 1 : 0.5,
-      }}
-    >
+    <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.35 }}>
       {emoji}
     </Text>
   );

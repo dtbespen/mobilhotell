@@ -6,6 +6,21 @@ import { usePoints } from "@/hooks/usePoints";
 import { useActivities } from "@/hooks/useActivities";
 import { formatDuration, formatPoints } from "@/lib/points";
 
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 10) return "God morgen";
+  if (h < 18) return "Hei";
+  return "God kveld";
+}
+
+function getLevel(total: number): { level: number; name: string; emoji: string; next: number } {
+  if (total >= 5000) return { level: 5, name: "Legend", emoji: "👑", next: 99999 };
+  if (total >= 2500) return { level: 4, name: "Master", emoji: "💎", next: 5000 };
+  if (total >= 1000) return { level: 3, name: "Pro", emoji: "🔥", next: 2500 };
+  if (total >= 300) return { level: 2, name: "Rising", emoji: "⚡", next: 1000 };
+  return { level: 1, name: "Nybegynner", emoji: "🌱", next: 300 };
+}
+
 export default function DashboardScreen() {
   const { profile, family } = useAuth();
   const points = usePoints();
@@ -14,110 +29,124 @@ export default function DashboardScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([points.refresh(), ]);
+    await Promise.all([points.refresh()]);
     setRefreshing(false);
   }, [points]);
 
-  const recentActivities = activities
-    .filter((a) => a.ended_at)
-    .slice(0, 5);
+  const recentActivities = activities.filter((a) => a.ended_at).slice(0, 5);
+
+  const level = getLevel(points.total);
+  const prevThreshold = level.level === 1 ? 0 : level.level === 2 ? 300 : level.level === 3 ? 1000 : level.level === 4 ? 2500 : 5000;
+  const progressToNext = Math.min(
+    ((points.total - prevThreshold) / (level.next - prevThreshold)) * 100,
+    100
+  );
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-dark-300">
       <ScrollView
         className="flex-1"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00cc52" />
         }
       >
+        {/* Header */}
         <View className="px-6 pt-4 pb-2">
-          <Text className="text-2xl font-bold text-gray-900">
-            Hei, {profile?.display_name}! 👋
+          <Text className="text-sm text-white/30 font-medium">{family?.name}</Text>
+          <Text className="text-2xl font-bold text-white">
+            {getGreeting()}, {profile?.display_name} 🔌
           </Text>
-          <Text className="mt-1 text-gray-500">{family?.name}</Text>
         </View>
 
-        {activeActivity && (
-          <View className="mx-6 mt-4 rounded-2xl bg-green-50 border border-green-200 p-4">
-            <View className="flex-row items-center gap-2">
-              <View className="h-3 w-3 rounded-full bg-green-500" />
-              <Text className="text-sm font-medium text-green-700">
-                Aktiv nå
+        {/* Plugs card */}
+        <View className="mx-6 mt-4 rounded-3xl bg-accent-500/15 border border-accent-500/20 p-6">
+          <View className="flex-row items-center justify-between">
+            <View>
+              <Text className="text-sm font-semibold text-accent-400/70">
+                Dine Plugs
+              </Text>
+              <Text className="text-5xl font-bold text-accent-400 mt-1">
+                {formatPoints(points.total)}
               </Text>
             </View>
-            <Text className="mt-2 text-lg font-semibold text-green-900">
+            <Text style={{ fontSize: 44 }}>🔌</Text>
+          </View>
+          <View className="mt-4 flex-row items-center gap-3">
+            <View className="flex-1 h-3 rounded-full bg-white/10">
+              <View
+                className="h-3 rounded-full bg-accent-400"
+                style={{ width: `${progressToNext}%` }}
+              />
+            </View>
+            <Text className="text-xs font-bold text-accent-400/50">
+              {level.emoji} Lvl {level.level}
+            </Text>
+          </View>
+          <Text className="mt-1 text-xs text-white/25">
+            {level.name} — {Math.max(0, level.next - points.total)} til neste nivå
+          </Text>
+        </View>
+
+        {/* Active session */}
+        {activeActivity && (
+          <View className="mx-6 mt-4 rounded-3xl bg-primary-500/15 border border-primary-500/25 p-5">
+            <View className="flex-row items-center gap-2">
+              <View className="h-2.5 w-2.5 rounded-full bg-primary-400" />
+              <Text className="text-sm font-semibold text-primary-400">
+                Pågår nå
+              </Text>
+            </View>
+            <Text className="mt-1 text-lg font-bold text-white">
               {activeActivity.activity_type?.name ?? "Aktivitet"}
+            </Text>
+            <Text className="mt-1 text-sm text-white/30">
+              Plugs tikker inn... 💰
             </Text>
           </View>
         )}
 
-        <View className="mt-6 flex-row gap-3 px-6">
-          <PointCard
-            label="I dag"
-            value={formatPoints(points.today)}
-            color="bg-primary-50"
-            textColor="text-primary-700"
-          />
-          <PointCard
-            label="Denne uken"
-            value={formatPoints(points.thisWeek)}
-            color="bg-accent-50"
-            textColor="text-accent-700"
-          />
-          <PointCard
-            label="Streak"
-            value={`${points.streak}🔥`}
-            color="bg-warning-50"
-            textColor="text-warning-700"
-          />
+        {/* Stats */}
+        <View className="mt-5 flex-row gap-3 px-6">
+          <StatCard emoji="⚡" value={formatPoints(points.today)} label="I dag" color="primary" />
+          <StatCard emoji="📅" value={formatPoints(points.thisWeek)} label="Denne uka" color="info" />
+          <StatCard emoji="🔥" value={`${points.streak}`} label="Streak" color="danger" />
         </View>
 
-        <View className="mx-6 mt-6 rounded-2xl bg-white p-4 shadow-sm">
-          <Text className="text-lg font-semibold text-gray-900">
-            Totalt: {formatPoints(points.total)} poeng
-          </Text>
-          <View className="mt-3 h-3 rounded-full bg-gray-100">
-            <View
-              className="h-3 rounded-full bg-primary-500"
-              style={{
-                width: `${Math.min((points.total / 1000) * 100, 100)}%`,
-              }}
-            />
-          </View>
-          <Text className="mt-1 text-xs text-gray-400">
-            {Math.max(0, 1000 - points.total)} poeng til neste nivå
-          </Text>
-        </View>
-
-        <View className="mt-6 px-6 pb-8">
-          <Text className="mb-3 text-lg font-semibold text-gray-900">
+        {/* Recent */}
+        <View className="mt-6 px-6 pb-10">
+          <Text className="mb-3 text-sm font-bold text-white/20 uppercase tracking-wider">
             Siste aktiviteter
           </Text>
           {recentActivities.length === 0 ? (
-            <View className="items-center rounded-2xl bg-white p-8 shadow-sm">
-              <Text className="text-3xl">🎯</Text>
-              <Text className="mt-2 text-center text-gray-500">
-                Ingen aktiviteter ennå.{"\n"}Start med å logge din første!
+            <View className="items-center rounded-3xl bg-dark-100 p-10">
+              <Text style={{ fontSize: 44 }}>🎯</Text>
+              <Text className="mt-3 text-center text-base font-bold text-white/50">
+                Ingenting her ennå!
+              </Text>
+              <Text className="mt-1 text-center text-sm text-white/20">
+                Legg vekk telefonen og start å samle Plugs
               </Text>
             </View>
           ) : (
-            <View className="gap-2">
+            <View className="gap-3">
               {recentActivities.map((activity) => (
                 <View
                   key={activity.id}
-                  className="flex-row items-center justify-between rounded-xl bg-white px-4 py-3 shadow-sm"
+                  className="flex-row items-center justify-between rounded-2xl bg-dark-100 px-5 py-4"
                 >
                   <View className="flex-1">
-                    <Text className="font-medium text-gray-900">
+                    <Text className="font-semibold text-white">
                       {activity.activity_type?.name}
                     </Text>
-                    <Text className="text-xs text-gray-400">
+                    <Text className="text-xs text-white/20">
                       {formatDuration(activity.duration_minutes)}
                     </Text>
                   </View>
-                  <Text className="font-bold text-primary-600">
-                    +{activity.points_earned}
-                  </Text>
+                  <View className="rounded-xl bg-accent-500/15 px-3 py-1.5">
+                    <Text className="text-sm font-bold text-accent-400">
+                      +{activity.points_earned} 🔌
+                    </Text>
+                  </View>
                 </View>
               ))}
             </View>
@@ -128,21 +157,24 @@ export default function DashboardScreen() {
   );
 }
 
-function PointCard({
-  label,
-  value,
-  color,
-  textColor,
-}: {
-  label: string;
-  value: string;
-  color: string;
-  textColor: string;
-}) {
+function StatCard({ emoji, value, label, color }: { emoji: string; value: string; label: string; color: string }) {
+  const bgMap: Record<string, string> = {
+    primary: "bg-primary-500/10",
+    info: "bg-info-500/10",
+    danger: "bg-danger-500/10",
+  };
+  const textMap: Record<string, string> = {
+    primary: "text-primary-400",
+    info: "text-info-500",
+    danger: "text-danger-500",
+  };
   return (
-    <View className={`flex-1 items-center rounded-2xl ${color} p-4`}>
-      <Text className={`text-2xl font-bold ${textColor}`}>{value}</Text>
-      <Text className="mt-1 text-xs text-gray-500">{label}</Text>
+    <View className={`flex-1 items-center rounded-2xl ${bgMap[color]} p-4`}>
+      <Text className="text-base">{emoji}</Text>
+      <Text className={`text-xl font-bold ${textMap[color]} mt-1`}>{value}</Text>
+      <Text className="text-[10px] font-bold uppercase tracking-wider text-white/20 mt-1">
+        {label}
+      </Text>
     </View>
   );
 }

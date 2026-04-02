@@ -34,7 +34,7 @@ export default function ActivityTypesScreen() {
     }
     const pts = parseFloat(newPoints);
     if (isNaN(pts) || pts <= 0) {
-      Alert.alert("Feil", "Oppgi gyldige poeng per minutt");
+      Alert.alert("Feil", "Oppgi gyldige Plugs per minutt");
       return;
     }
 
@@ -78,7 +78,7 @@ export default function ActivityTypesScreen() {
             </Text>
           </View>
           <Text className="text-gray-500">
-            Definer hvilke aktiviteter som gir poeng
+            Definer hvilke aktiviteter som gir Plugs
           </Text>
         </View>
 
@@ -94,7 +94,7 @@ export default function ActivityTypesScreen() {
               <View className="flex-1">
                 <Text className="font-semibold text-gray-900">{type.name}</Text>
                 <Text className="text-xs text-gray-400">
-                  {type.points_per_minute} poeng/min •{" "}
+                  {type.points_per_minute} Plugs/min •{" "}
                   {type.is_default ? "Standard" : "Egendefinert"}
                 </Text>
               </View>
@@ -169,7 +169,7 @@ export default function ActivityTypesScreen() {
 
             <View className="mt-4">
               <Text className="mb-1 text-sm font-medium text-gray-700">
-                Poeng per minutt
+                Plugs per minutt
               </Text>
               <TextInput
                 className="rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-center text-xl font-bold"

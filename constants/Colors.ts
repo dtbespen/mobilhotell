@@ -1,27 +1,28 @@
 // Unplug brand colors – see BRAND.md for full guidelines
 
 export const Brand = {
-  green: '#2DC653',   // Primary – CTA buttons, active elements
-  red: '#E63946',     // Energy – streaks, alerts
-  blue: '#457BFF',    // Secondary – links, info
-  yellow: '#FFD166',  // Rewards – Plugs currency, badges
+  green: '#00cc52',    // Vivid green – primary
+  amber: '#ffba24',    // Vivid amber – rewards / Plugs
+  coral: '#ff5c4d',    // Vivid coral – streaks, alerts
+  purple: '#7b61ff',   // Vivid purple – info
+  dark: '#16191d',     // Dark base – backgrounds
 };
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#F8F9FA',
+    text: '#ffffff',
+    background: '#16191d',
     tint: Brand.green,
-    icon: '#687076',
-    tabIconDefault: '#687076',
+    icon: '#555a62',
+    tabIconDefault: '#555a62',
     tabIconSelected: Brand.green,
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
+    text: '#ffffff',
+    background: '#16191d',
     tint: Brand.green,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
+    icon: '#555a62',
+    tabIconDefault: '#555a62',
     tabIconSelected: Brand.green,
   },
 };

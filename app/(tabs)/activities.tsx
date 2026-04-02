@@ -57,7 +57,7 @@ export default function ActivitiesScreen() {
     if (result.error) {
       Alert.alert("Feil", result.error.message);
     } else {
-      Alert.alert("Bra jobba! 🎉", `Du fikk ${result.pointsEarned} poeng!`);
+      Alert.alert("Bra jobba! 🎉", `Du fikk ${result.pointsEarned} Plugs! Helt sjukt bra.`);
     }
   }
 
@@ -65,14 +65,14 @@ export default function ActivitiesScreen() {
     if (!selectedType || !manualMinutes) return;
     const mins = parseInt(manualMinutes, 10);
     if (isNaN(mins) || mins <= 0) {
-      Alert.alert("Feil", "Vennligst oppgi et gyldig antall minutter");
+      Alert.alert("Hm", "Skriv inn hvor mange minutter det varte");
       return;
     }
     const result = await logManualActivity(selectedType, mins);
     if (result.error) {
       Alert.alert("Feil", result.error.message);
     } else {
-      Alert.alert("Registrert! ✅", `Du fikk ${result.pointsEarned} poeng!`);
+      Alert.alert("Registrert! 💪", `${result.pointsEarned} Plugs i lomma!`);
     }
     setShowManual(false);
     setSelectedType(null);
@@ -87,117 +87,126 @@ export default function ActivitiesScreen() {
     return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
   };
 
-  return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <ScrollView className="flex-1">
-        <View className="px-6 pt-4 pb-2">
-          <Text className="text-2xl font-bold text-gray-900">Aktiviteter</Text>
-          <Text className="mt-1 text-gray-500">
-            Start en timer eller logg manuelt
-          </Text>
-        </View>
+  const currentPlugs = Math.round(
+    (elapsed / 60) * (activeActivity?.activity_type?.points_per_minute ?? 1)
+  );
 
+  return (
+    <SafeAreaView className="flex-1 bg-dark-300">
+      <ScrollView className="flex-1">
+        {/* Active timer */}
         {activeActivity && (
-          <View className="mx-6 mt-4 rounded-2xl bg-green-50 border border-green-200 p-6">
-            <View className="items-center">
-              <View className="flex-row items-center gap-2 mb-2">
-                <View className="h-3 w-3 rounded-full bg-green-500" />
-                <Text className="text-sm font-medium text-green-700">
-                  Pågår nå
-                </Text>
-              </View>
-              <Text className="text-xl font-semibold text-green-900">
-                {activeActivity.activity_type?.name}
-              </Text>
-              <Text className="mt-3 text-5xl font-bold text-green-800 font-mono">
-                {formatTimer(elapsed)}
-              </Text>
-              <Text className="mt-2 text-sm text-green-600">
-                ~{Math.round(elapsed / 60 * (activeActivity.activity_type?.points_per_minute ?? 1))} poeng så langt
+          <View className="bg-primary-500/15 border-b border-primary-500/20 px-6 pt-8 pb-10">
+            <View className="flex-row items-center gap-2 mb-3">
+              <View className="h-3 w-3 rounded-full bg-primary-400" />
+              <Text className="text-sm font-semibold text-primary-400 uppercase tracking-wider">
+                Pågår nå
               </Text>
             </View>
+
+            <Text className="text-lg font-bold text-white">
+              {activeActivity.activity_type?.name}
+            </Text>
+
+            <Text className="mt-4 text-6xl font-bold text-primary-400 text-center" style={{ fontVariant: ["tabular-nums"] }}>
+              {formatTimer(elapsed)}
+            </Text>
+
+            <View className="mt-4 items-center">
+              <View className="rounded-2xl bg-accent-500/15 border border-accent-500/20 px-6 py-3">
+                <Text className="text-xl font-bold text-accent-400">
+                  ~{currentPlugs} Plugs 🔌
+                </Text>
+              </View>
+            </View>
+
             <TouchableOpacity
-              className="mt-6 rounded-xl bg-red-500 py-4"
+              className="mt-6 rounded-2xl bg-danger-500 py-5"
               onPress={handleStop}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
             >
-              <Text className="text-center text-lg font-semibold text-white">
-                Stopp aktivitet
+              <Text className="text-center text-lg font-bold text-white">
+                Stopp og hent Plugs ✋
               </Text>
             </TouchableOpacity>
           </View>
         )}
 
+        {/* Header */}
+        {!activeActivity && (
+          <View className="px-6 pt-4 pb-2">
+            <Text className="text-2xl font-bold text-white">
+              Hva gjør du? ⚡
+            </Text>
+            <Text className="mt-1 text-sm text-white/25">
+              Velg aktivitet og start timeren
+            </Text>
+          </View>
+        )}
+
+        {/* Activity types */}
         {!activeActivity && (
           <>
-            <View className="mt-6 px-6">
-              <Text className="mb-3 text-lg font-semibold text-gray-900">
+            <View className="mt-4 px-6">
+              <Text className="mb-3 text-sm font-bold text-white/20 uppercase tracking-wider">
                 Start timer
               </Text>
               <View className="gap-3">
                 {activityTypes.map((type) => (
                   <TouchableOpacity
                     key={type.id}
-                    className="flex-row items-center justify-between rounded-xl bg-white px-4 py-4 shadow-sm"
+                    className="flex-row items-center rounded-2xl bg-dark-100 px-5 py-5"
                     onPress={() => handleStart(type)}
                     activeOpacity={0.7}
                   >
-                    <View className="flex-row items-center gap-3">
-                      <Text className="text-2xl">
-                        {CATEGORY_EMOJI[type.category] ?? "⭐"}
+                    <Text className="text-2xl mr-4">
+                      {CATEGORY_EMOJI[type.category] ?? "⭐"}
+                    </Text>
+                    <View className="flex-1">
+                      <Text className="text-base font-bold text-white">
+                        {type.name}
                       </Text>
-                      <View>
-                        <Text className="font-semibold text-gray-900">
-                          {type.name}
-                        </Text>
-                        <Text className="text-xs text-gray-400">
-                          {type.points_per_minute} poeng/min
-                        </Text>
-                      </View>
+                      <Text className="text-sm text-accent-400 font-medium">
+                        {type.points_per_minute} Plugs/min
+                      </Text>
                     </View>
-                    <View className="rounded-lg bg-primary-50 px-3 py-1.5">
-                      <Text className="text-sm font-medium text-primary-700">
-                        Start
-                      </Text>
+                    <View className="rounded-xl bg-primary-500/15 px-4 py-2">
+                      <Text className="text-sm font-bold text-primary-400">Go!</Text>
                     </View>
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
 
-            <View className="mt-8 px-6 pb-8">
-              <Text className="mb-3 text-lg font-semibold text-gray-900">
-                Logg manuelt
+            <View className="mt-8 px-6 pb-10">
+              <Text className="mb-3 text-sm font-bold text-white/20 uppercase tracking-wider">
+                Logg i etterkant
               </Text>
               <View className="gap-3">
                 {activityTypes.map((type) => (
                   <TouchableOpacity
                     key={type.id}
-                    className="flex-row items-center justify-between rounded-xl bg-white px-4 py-4 shadow-sm"
+                    className="flex-row items-center rounded-2xl bg-dark-100 px-5 py-4"
                     onPress={() => {
                       setSelectedType(type);
                       setShowManual(true);
                     }}
                     activeOpacity={0.7}
                   >
-                    <View className="flex-row items-center gap-3">
-                      <Text className="text-2xl">
-                        {CATEGORY_EMOJI[type.category] ?? "⭐"}
+                    <Text className="text-xl mr-4">
+                      {CATEGORY_EMOJI[type.category] ?? "⭐"}
+                    </Text>
+                    <View className="flex-1">
+                      <Text className="font-semibold text-white">
+                        {type.name}
                       </Text>
-                      <View>
-                        <Text className="font-semibold text-gray-900">
-                          {type.name}
-                        </Text>
-                        <Text className="text-xs text-gray-400">
-                          {type.points_per_minute} poeng/min
-                        </Text>
-                      </View>
-                    </View>
-                    <View className="rounded-lg bg-gray-100 px-3 py-1.5">
-                      <Text className="text-sm font-medium text-gray-600">
-                        Legg til
+                      <Text className="text-xs text-white/20">
+                        {type.points_per_minute} Plugs/min
                       </Text>
                     </View>
+                    <Text className="text-sm font-medium text-white/25">
+                      + Legg til
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -212,45 +221,45 @@ export default function ActivitiesScreen() {
         transparent
         onRequestClose={() => setShowManual(false)}
       >
-        <View className="flex-1 justify-end bg-black/40">
-          <View className="rounded-t-3xl bg-white px-6 pb-10 pt-6">
-            <Text className="text-xl font-bold text-gray-900">
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="rounded-t-[32px] bg-dark-200 px-8 pb-10 pt-8">
+            <Text className="text-xl font-bold text-white">
               {selectedType?.name}
             </Text>
-            <Text className="mt-1 text-gray-500">
-              Hvor mange minutter varte aktiviteten?
+            <Text className="mt-1 text-white/30">
+              Hvor mange minutter holdt du ut?
             </Text>
             <TextInput
-              className="mt-4 rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-center text-2xl font-bold"
+              className="mt-6 rounded-2xl bg-dark-50 px-5 py-5 text-center text-4xl font-bold text-white"
               placeholder="30"
+              placeholderTextColor="#555a62"
               value={manualMinutes}
               onChangeText={setManualMinutes}
               keyboardType="number-pad"
               autoFocus
             />
             {manualMinutes && selectedType && (
-              <Text className="mt-2 text-center text-sm text-primary-600">
-                = {Math.round(parseInt(manualMinutes, 10) * selectedType.points_per_minute)} poeng
-              </Text>
+              <View className="mt-3 items-center">
+                <View className="rounded-xl bg-accent-500/15 px-5 py-2">
+                  <Text className="text-base font-bold text-accent-400">
+                    = {Math.round(parseInt(manualMinutes, 10) * selectedType.points_per_minute)} Plugs 🔌
+                  </Text>
+                </View>
+              </View>
             )}
-            <View className="mt-6 flex-row gap-3">
+            <View className="mt-8 flex-row gap-3">
               <TouchableOpacity
-                className="flex-1 rounded-xl border border-gray-300 py-3"
-                onPress={() => {
-                  setShowManual(false);
-                  setManualMinutes("");
-                }}
+                className="flex-1 rounded-2xl bg-dark-50 py-4"
+                onPress={() => { setShowManual(false); setManualMinutes(""); }}
               >
-                <Text className="text-center font-semibold text-gray-600">
-                  Avbryt
-                </Text>
+                <Text className="text-center font-bold text-white/30">Avbryt</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                className="flex-1 rounded-xl bg-primary-600 py-3"
+                className="flex-1 rounded-2xl bg-primary-500 py-4"
                 onPress={handleManualLog}
               >
-                <Text className="text-center font-semibold text-white">
-                  Registrer
+                <Text className="text-center font-bold text-white">
+                  Hent Plugs! 💰
                 </Text>
               </TouchableOpacity>
             </View>

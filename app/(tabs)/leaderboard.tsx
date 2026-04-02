@@ -28,25 +28,12 @@ export default function LeaderboardScreen() {
     let fromDate: string | null = null;
 
     if (period === "today") {
-      fromDate = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate()
-      ).toISOString();
+      fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
     } else if (period === "week") {
-      fromDate = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() - now.getDay() + 1
-      ).toISOString();
+      fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() + 1).toISOString();
     }
 
-    const todayStart = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate()
-    ).toISOString();
-
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
     const results: LeaderboardEntry[] = [];
 
     for (const member of members) {
@@ -56,13 +43,10 @@ export default function LeaderboardScreen() {
         .eq("profile_id", member.id)
         .not("ended_at", "is", null);
 
-      if (fromDate) {
-        query = query.gte("started_at", fromDate);
-      }
+      if (fromDate) query = query.gte("started_at", fromDate);
 
       const { data: periodData } = await query;
-      const totalPoints =
-        periodData?.reduce((sum, a) => sum + a.points_earned, 0) ?? 0;
+      const totalPoints = periodData?.reduce((sum, a) => sum + a.points_earned, 0) ?? 0;
 
       const { data: todayData } = await supabase
         .from("activities")
@@ -71,8 +55,7 @@ export default function LeaderboardScreen() {
         .gte("started_at", todayStart)
         .not("ended_at", "is", null);
 
-      const todayPoints =
-        todayData?.reduce((sum, a) => sum + a.points_earned, 0) ?? 0;
+      const todayPoints = todayData?.reduce((sum, a) => sum + a.points_earned, 0) ?? 0;
 
       results.push({
         profile_id: member.id,
@@ -98,42 +81,82 @@ export default function LeaderboardScreen() {
   }, [fetchLeaderboard]);
 
   const MEDALS = ["🥇", "🥈", "🥉"];
-  const PERIOD_LABELS = {
-    today: "I dag",
-    week: "Denne uken",
-    all: "Totalt",
-  };
+  const PERIOD_LABELS = { today: "I dag", week: "Denne uka", all: "Totalt" };
+  const PODIUM_COLORS = ["bg-accent-500/20", "bg-primary-500/20", "bg-info-500/20"];
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-dark-300">
       <ScrollView
         className="flex-1"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00cc52" />
         }
       >
         <View className="px-6 pt-4 pb-2">
-          <Text className="text-2xl font-bold text-gray-900">Poengtavle</Text>
-          <Text className="mt-1 text-gray-500">{family?.name}</Text>
+          <Text className="text-2xl font-bold text-white">Hvem leder? 🏆</Text>
+          <Text className="mt-1 text-sm text-white/20">{family?.name}</Text>
         </View>
 
-        <View className="mx-6 mt-4 flex-row gap-2">
+        {/* Period picker */}
+        <View className="mx-6 mt-4 flex-row gap-2 rounded-2xl bg-dark-100 p-1.5">
           {(["today", "week", "all"] as const).map((p) => (
-            <TouchablePeriod
+            <TouchableOpacity
               key={p}
-              label={PERIOD_LABELS[p]}
-              isActive={period === p}
+              className={`flex-1 rounded-xl py-3 ${period === p ? "bg-primary-500" : ""}`}
               onPress={() => setPeriod(p)}
-            />
+              activeOpacity={0.7}
+            >
+              <Text className={`text-center text-sm font-bold ${period === p ? "text-white" : "text-white/25"}`}>
+                {PERIOD_LABELS[p]}
+              </Text>
+            </TouchableOpacity>
           ))}
         </View>
 
-        <View className="mt-6 px-6 pb-8">
+        {/* Podium */}
+        {entries.length >= 2 && (
+          <View className="mt-8 flex-row items-end justify-center gap-3 px-6">
+            {entries.length >= 2 && (
+              <PodiumSpot
+                name={entries[1].display_name}
+                plugs={entries[1].total_points}
+                medal="🥈"
+                height={72}
+                bg={PODIUM_COLORS[1]}
+                isMe={entries[1].profile_id === profile?.id}
+              />
+            )}
+            <PodiumSpot
+              name={entries[0].display_name}
+              plugs={entries[0].total_points}
+              medal="🥇"
+              height={100}
+              bg={PODIUM_COLORS[0]}
+              isMe={entries[0].profile_id === profile?.id}
+            />
+            {entries.length >= 3 && (
+              <PodiumSpot
+                name={entries[2].display_name}
+                plugs={entries[2].total_points}
+                medal="🥉"
+                height={56}
+                bg={PODIUM_COLORS[2]}
+                isMe={entries[2].profile_id === profile?.id}
+              />
+            )}
+          </View>
+        )}
+
+        {/* Full list */}
+        <View className="mt-6 px-6 pb-10">
           {entries.length === 0 ? (
-            <View className="items-center rounded-2xl bg-white p-8 shadow-sm">
-              <Text className="text-3xl">🏆</Text>
-              <Text className="mt-2 text-center text-gray-500">
-                Ingen poeng ennå.{"\n"}Kom i gang med å logge aktiviteter!
+            <View className="items-center rounded-3xl bg-dark-100 p-10">
+              <Text style={{ fontSize: 44 }}>🏆</Text>
+              <Text className="mt-3 text-base font-bold text-white/50 text-center">
+                Ingen Plugs ennå!
+              </Text>
+              <Text className="mt-1 text-sm text-white/20 text-center">
+                Hvem blir først?
               </Text>
             </View>
           ) : (
@@ -141,33 +164,35 @@ export default function LeaderboardScreen() {
               {entries.map((entry, index) => (
                 <View
                   key={entry.profile_id}
-                  className={`flex-row items-center rounded-2xl px-4 py-4 shadow-sm ${
+                  className={`flex-row items-center rounded-2xl px-5 py-4 ${
                     entry.profile_id === profile?.id
-                      ? "bg-primary-50 border border-primary-200"
-                      : "bg-white"
+                      ? "bg-primary-500/10 border border-primary-500/20"
+                      : "bg-dark-100"
                   }`}
                 >
-                  <Text className="w-10 text-center text-2xl">
+                  <Text className="w-10 text-center text-xl">
                     {index < 3 ? MEDALS[index] : `${index + 1}.`}
                   </Text>
                   <View className="flex-1 ml-2">
                     <View className="flex-row items-center gap-2">
-                      <Text className="font-semibold text-gray-900">
+                      <Text className="font-bold text-white">
                         {entry.display_name}
                       </Text>
                       {entry.profile_id === profile?.id && (
-                        <View className="rounded-full bg-primary-100 px-2 py-0.5">
-                          <Text className="text-xs text-primary-700">Deg</Text>
+                        <View className="rounded-full bg-primary-500/20 px-2 py-0.5">
+                          <Text className="text-[10px] font-bold text-primary-400">deg</Text>
                         </View>
                       )}
                     </View>
-                    <Text className="text-xs text-gray-400">
-                      +{entry.today_points} poeng i dag
+                    <Text className="text-xs text-white/20">
+                      +{entry.today_points} Plugs i dag
                     </Text>
                   </View>
-                  <Text className="text-xl font-bold text-primary-600">
-                    {formatPoints(entry.total_points)}
-                  </Text>
+                  <View className="rounded-xl bg-accent-500/15 px-3 py-1.5">
+                    <Text className="text-sm font-bold text-accent-400">
+                      {formatPoints(entry.total_points)} 🔌
+                    </Text>
+                  </View>
                 </View>
               ))}
             </View>
@@ -178,30 +203,24 @@ export default function LeaderboardScreen() {
   );
 }
 
-function TouchablePeriod({
-  label,
-  isActive,
-  onPress,
+function PodiumSpot({
+  name, plugs, medal, height, bg, isMe,
 }: {
-  label: string;
-  isActive: boolean;
-  onPress: () => void;
+  name: string; plugs: number; medal: string; height: number; bg: string; isMe: boolean;
 }) {
   return (
-    <TouchableOpacity
-      className={`flex-1 rounded-xl py-2.5 ${
-        isActive ? "bg-primary-600" : "bg-white"
-      }`}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <Text
-        className={`text-center text-sm font-semibold ${
-          isActive ? "text-white" : "text-gray-600"
-        }`}
-      >
-        {label}
+    <View className="flex-1 items-center">
+      <Text className="text-2xl mb-1">{medal}</Text>
+      <Text className="text-sm font-bold text-white mb-1" numberOfLines={1}>
+        {name}
       </Text>
-    </TouchableOpacity>
+      <Text className="text-xs font-semibold text-accent-400 mb-2">
+        {formatPoints(plugs)}
+      </Text>
+      <View
+        className={`w-full rounded-t-2xl ${isMe ? "bg-primary-500/30" : bg}`}
+        style={{ height }}
+      />
+    </View>
   );
 }
