@@ -1,6 +1,6 @@
 # Mobilhotell – Hardware-oppsett
 
-Fysisk mobilhotell med 5 slotter (en per familiemedlem), IR-sensorer og statuslys, koblet til Expo-appen via WiFi og WebSocket.
+Fysisk mobilhotell med 5 slotter (en per familiemedlem), IR-sensorer, statuslys og OLED-display, koblet til Expo-appen via WiFi og WebSocket.
 
 ---
 
@@ -16,9 +16,10 @@ Fysisk mobilhotell med 5 slotter (en per familiemedlem), IR-sensorer og statusly
 | 4 | 220 ohm motstander | 5 stk | [elkim.no – LED-komponenter](https://elkim.no/produktkategori/komponenter/led-komponenter/) | ~10 kr |
 | 5 | Breadboard 830 hull | 1 stk | [elkim.no](https://elkim.no/produkt/koblingsbrett-breadboard/) | ~49 kr |
 | 6 | Jumperkabler 40 stk x 10 cm (HAN/HUN) | 1 pakke | [elkim.no](https://elkim.no/produkt/jumper-kabel-40x10-cm-flere-variasjoner/) | ~59 kr |
-| 7 | Micro-USB datakabel (ikke kun lading) | 1 stk | Kjell & Co / har sikkert | ~0–49 kr |
+| 7 | OLED-display 0.96" 128x64 I2C | 1 stk | [elkim.no](https://elkim.no/produkt/0-96-i2c-iic-serial-12864-oled-lcd-screen-display-module-for-arduino-raspberry-osv/) | ~89 kr |
+| 8 | Micro-USB datakabel (ikke kun lading) | 1 stk | Kjell & Co / har sikkert | ~0–49 kr |
 
-**Total nødvendig: ~380–430 kr**
+**Total nødvendig: ~470–520 kr**
 
 ### Valgfritt (anbefalt)
 
@@ -54,7 +55,13 @@ Slot 4 (Familiemedlem 4) – Status-LED  →  GPIO 19
 
 Slot 5 (Familiemedlem 5) – IR sensor   →  GPIO 25
 Slot 5 (Familiemedlem 5) – Status-LED  →  GPIO 21
+
+OLED Display – SDA  →  GPIO 32
+OLED Display – SCL  →  GPIO 33
 ```
+
+> GPIO 21 er ESP32s standard I2C SDA-pin, men den er allerede brukt til LED slot 5.
+> Derfor brukes GPIO 32 (SDA) og GPIO 33 (SCL) for OLED-displayet via software I2C (`Wire.begin(32, 33)`).
 
 ---
 
@@ -88,6 +95,35 @@ GPIO-pin  →  220Ω motstand  →  LED (lang pinne, +)  →  GND (kort pinne, �
 
 LED-en lyser grønt når telefonen er sjekket inn (GPIO settes HIGH i firmware).
 
+### OLED-display
+
+OLED-displayet bruker I2C-protokollen og kobles til ESP32 med 4 ledninger:
+
+```
+Display VCC  →  (+) rød skinne på breadboard
+Display GND  →  (−) blå skinne på breadboard
+Display SDA  →  GPIO 32
+Display SCL  →  GPIO 33
+```
+
+I firmware initialiseres I2C med `Wire.begin(32, 33)` for å bruke disse pinnene i stedet for standard (GPIO 21/22).
+
+Displayet viser live-status for alle 5 slotter direkte fra ESP32 – uavhengig av om appen er åpen:
+
+```
+╔══════════════════╗
+║  UNPLUG HOTEL    ║
+╠══════════════════╣
+║ Mamma   ✓  42m  ║
+║ Pappa   ✓  38m  ║
+║ Emma    –        ║
+║ Noah    ✓  15m  ║
+║ Lilly   –        ║
+╠══════════════════╣
+║ Plugs i dag: 247 ║
+╚══════════════════╝
+```
+
 ### Fullstendig blokkdiagram
 
 ```
@@ -113,6 +149,9 @@ LED-en lyser grønt når telefonen er sjekket inn (GPIO settes HIGH i firmware).
      │                                                                            │
      ├── GPIO 25 ◄── OUT ── [IR sensor slot 5]  ── VCC/GND fra skinne            │
      ├── GPIO 21  ──► 220Ω ──► [LED slot 5] ──► GND                              │
+     │                                                                            │
+     ├── GPIO 32  ──► SDA ── [OLED display]  ── VCC/GND fra skinne               │
+     ├── GPIO 33  ──► SCL ── [OLED display]                                       │
      │                                                                            │
      │ WiFi                                                                       │
      ▼                                                                            │
@@ -145,13 +184,25 @@ Sensoren har 3 mm skruehull – skrus fast i bunn eller side av sloten.
 En 3 mm LED monteres i et lite hull bohret i fronten av mobilhotellet,
 rett over eller ved siden av åpningen til sloten. Lyser grønt når telefonen er inne.
 
+### OLED-montering
+
+OLED-displayet monteres synlig på fronten av mobilhotellet, f.eks. sentrert over alle slottene
+eller på siden av kasettet. Viser live-status for hele familien uten at man trenger å åpne appen.
+
 ```
   Frontpanel mobilhotell:
 
-  ┌──────┬──────┬──────┬──────┬──────┐
+  ┌─────────────────────────────────────────────┐
+  │         ┌──────────────────────┐            │
+  │         │   UNPLUG HOTEL       │            │  ← OLED-display
+  │         │   Mamma ✓  Pappa ✓   │            │
+  │         │   Emma –   Noah ✓    │            │
+  │         │   Lilly –  Plugs:247 │            │
+  │         └──────────────────────┘            │
+  ├──────┬──────┬──────┬──────┬──────┤
   │  🟢  │  🟢  │      │  🟢  │      │  ← Status-LEDs
   │      │      │      │      │      │
-  │  📱  │  📱  │      │  📱  │      │  ← Slotter (telefoner inne/ute)
+  │  📱  │  📱  │      │  📱  │      │  ← Slotter
   │      │      │      │      │      │
   │Mamma │Pappa │ Emma │ Noah │Lilly │
   └──────┴──────┴──────┴──────┴──────┘
@@ -195,6 +246,8 @@ Installer via Arduino IDE → Tools → Manage Libraries:
 | ESPAsyncWebServer | `ESPAsyncWebServer` | WebSocket-server |
 | AsyncTCP | `AsyncTCP` | Kreves av ESPAsyncWebServer |
 | ArduinoJson | `ArduinoJson` | Formatere JSON til appen |
+| Adafruit SSD1306 | `Adafruit SSD1306` | OLED-display driver |
+| Adafruit GFX Library | `Adafruit GFX` | Kreves av Adafruit SSD1306 |
 
 ---
 
@@ -222,6 +275,10 @@ Hvert familiemedlem får fast slot – bytter ikke.
 | 3 | 27 | 18 | Konfigureres i app |
 | 4 | 26 | 19 | Konfigureres i app |
 | 5 | 25 | 21 | Konfigureres i app |
+
+| Komponent | GPIO SDA | GPIO SCL |
+|---|---|---|
+| OLED-display | 32 | 33 |
 
 ---
 
@@ -253,3 +310,5 @@ IP-adressen konfigureres én gang i Settings-skjermen.
 - **LED lyser ikke:** Sjekk polaritet (lang pinne = +, kort pinne = −) og at motstanden er koblet i serie
 - **App kobler ikke til ESP32:** Sjekk at telefon og ESP32 er på samme WiFi-nettverk. Sjekk IP-adressen i Arduino Serial Monitor (115200 baud)
 - **Kabelrot:** Fargekod kablene – rød = VCC, sort = GND, deretter en farge per slot for signalledningene
+- **OLED viser ingenting:** Sjekk at `Wire.begin(32, 33)` er kalt før `display.begin()` i firmware. Sjekk også I2C-adressen – prøv `0x3C` og `0x3D` (de fleste 0.96" moduler bruker `0x3C`)
+- **OLED viser feil tekst:** OLED oppdateres av ESP32 direkte og er ikke avhengig av appen. Sjekk at sensor-GPIO-statusen leses riktig i firmware

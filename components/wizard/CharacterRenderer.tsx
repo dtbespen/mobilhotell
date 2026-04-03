@@ -60,6 +60,7 @@ export function CharacterRenderer({ config, characterClass, level = 1, size = "m
     return pixelsFromGrid(pd, pixelSize);
   }, [
     config.body_color, (config as any).body_shape, (config as any).eye_color,
+    (config as any).gender, (config as any).face_variant,
     config.hair_style, config.hair_color, config.hat, config.armor,
     config.cape, config.weapon, config.shield, config.familiar,
     characterClass, pixelSize,
@@ -95,6 +96,7 @@ export function CharacterRenderer({ config, characterClass, level = 1, size = "m
 export function HeadPreview({ config, characterClass, size = 48 }: { config: AvatarConfig; characterClass: CharacterClass; size?: number }) {
   const grid = useMemo(() => renderHead(config, characterClass), [
     config.body_color, (config as any).body_shape, (config as any).eye_color,
+    (config as any).gender, (config as any).face_variant,
     config.hair_style, config.hair_color, config.hat, characterClass,
   ]);
   return <PixelCanvas grid={grid} canvasSize={size} />;

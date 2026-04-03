@@ -171,3 +171,17 @@ export const HAIR_COLORS = [
   { slug: "silver", label: "Solv", hex: "#c0c0c0" },
   { slug: "white", label: "Hvit", hex: "#e8e8e8" },
 ] as const;
+
+export const GENDER_OPTIONS = [
+  { slug: "male", label: "Gutt", emoji: "👦" },
+  { slug: "female", label: "Jente", emoji: "👧" },
+] as const;
+
+export const FACE_VARIANTS = [
+  { slug: "standard", label: "Standard" },
+  { slug: "round", label: "Rund" },
+  { slug: "smiling", label: "Smilende" },
+  { slug: "serious", label: "Seriøs" },
+  { slug: "cute", label: "Søt" },
+  { slug: "fierce", label: "Vill" },
+] as const;

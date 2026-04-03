@@ -10,6 +10,8 @@ export type AvatarConfig = {
   body_color: string;
   body_shape?: string;
   eye_color?: string;
+  gender?: string;
+  face_variant?: string;
   hair_style: string | null;
   hair_color: string | null;
   hat: string | null;

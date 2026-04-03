@@ -6,6 +6,8 @@ import type { CharacterClass, AvatarConfig } from "./database.types";
 
 export const GRID = 32;
 export type PixelData = (string | null)[][];
+export type FaceVariant = "standard" | "round" | "smiling" | "serious" | "cute" | "fierce";
+export type Gender = "male" | "female";
 
 function canvas(): PixelData {
   return Array.from({ length: GRID }, () => new Array<string | null>(GRID).fill(null));
@@ -142,51 +144,142 @@ const BP_MAP: Record<BodyShape, BP> = {
   },
 };
 
-function drawBody(c: PixelData, bp: BP, sk: string, sh: string, hi: string, ol: string, eye: string) {
+// ─── FACE RENDERING ───
+
+function drawFace(
+  c: PixelData, bp: BP,
+  sh: string, hi: string, ol: string, eye: string,
+  gender: Gender, face: FaceVariant,
+) {
+  const { eyY, eyLx, eyRx, eyW: ew, noseX, noseY, mouthY, mouthW } = bp;
+  const mLeft = noseX - Math.floor(mouthW / 2);
+  const bigEyes = face === "round" || face === "cute";
+
+  // ── Eyes ──
+  if (face === "smiling") {
+    // Happy squinted eyes – arc shape
+    dot(c, eyLx, eyY, ol);
+    fill(c, eyLx + 1, eyY, ew - 1, 1, eye);
+    dot(c, eyRx, eyY, ol);
+    fill(c, eyRx + 1, eyY, ew - 1, 1, eye);
+  } else if (bigEyes) {
+    // Tall 2×3 eyes for round/cute
+    fill(c, eyLx, eyY - 1, ew, 3, "#ffffff");
+    dot(c, eyLx, eyY + 1, eye);
+    dot(c, eyLx, eyY, eye);
+    dot(c, eyLx + ew - 1, eyY - 1, hi);
+    fill(c, eyRx, eyY - 1, ew, 3, "#ffffff");
+    dot(c, eyRx, eyY + 1, eye);
+    dot(c, eyRx, eyY, eye);
+    dot(c, eyRx + ew - 1, eyY - 1, hi);
+  } else {
+    // Standard 2×2 eyes
+    fill(c, eyLx, eyY, ew, 2, "#ffffff");
+    dot(c, eyLx, eyY + 1, eye);
+    dot(c, eyLx + ew - 1, eyY, "#ffffff");
+    fill(c, eyRx, eyY, ew, 2, "#ffffff");
+    dot(c, eyRx, eyY + 1, eye);
+    dot(c, eyRx + ew - 1, eyY, "#ffffff");
+  }
+
+  // ── Eyebrows ──
+  if (face === "fierce") {
+    // Angled V-brows (intimidating)
+    dot(c, eyLx - 1, eyY - 2, ol);
+    fill(c, eyLx, eyY - 1, ew, 1, ol);
+    fill(c, eyRx, eyY - 1, ew, 1, ol);
+    dot(c, eyRx + ew, eyY - 2, ol);
+  } else if (face === "serious") {
+    // Heavy flat brows, close to eyes
+    fill(c, eyLx - 1, eyY - 1, ew + 2, 1, ol);
+    fill(c, eyRx - 1, eyY - 1, ew + 2, 1, ol);
+    dot(c, eyLx, eyY - 2, ol);
+    dot(c, eyRx, eyY - 2, ol);
+  } else if (bigEyes) {
+    // Arched brows (high inner, curves out)
+    dot(c, eyLx, eyY - 3, ol);
+    fill(c, eyLx + 1, eyY - 2, ew - 1, 1, ol);
+    fill(c, eyRx, eyY - 2, ew - 1, 1, ol);
+    dot(c, eyRx + ew - 1, eyY - 3, ol);
+  } else {
+    // Standard brows
+    fill(c, eyLx - 1, eyY - 1, ew + 1, 1, ol);
+    fill(c, eyRx, eyY - 1, ew + 1, 1, ol);
+  }
+
+  // ── Female lashes ──
+  if (gender === "female") {
+    dot(c, eyLx + ew, eyY - 1, ol);
+    dot(c, eyRx + ew, eyY - 1, ol);
+    dot(c, eyLx - 1, bigEyes ? eyY + 1 : eyY + 1, ol);
+    dot(c, eyRx + ew, bigEyes ? eyY + 1 : eyY + 1, ol);
+  }
+
+  // ── Nose ──
+  dot(c, noseX, noseY, sh);
+  dot(c, noseX - 1, noseY + 1, sh);
+
+  // ── Mouth ──
+  if (face === "smiling" || face === "cute") {
+    // U-shaped smile
+    dot(c, mLeft, mouthY, sh);
+    dot(c, mLeft + mouthW - 1, mouthY, sh);
+    fill(c, mLeft + 1, mouthY + 1, mouthW - 2, 1, sh);
+    dot(c, mLeft + 1, mouthY + 1, "#c06060");
+  } else if (face === "serious" || face === "fierce") {
+    // Thin straight line
+    fill(c, mLeft, mouthY, mouthW - 1, 1, sh);
+  } else {
+    // Standard
+    fill(c, mLeft, mouthY, mouthW, 1, sh);
+    dot(c, mLeft + 1, mouthY, "#c06060");
+  }
+
+  // ── Cheeks ──
+  if (face === "cute") {
+    dot(c, eyLx - 1, eyY + 3, "#ff9999");
+    dot(c, eyRx + ew, eyY + 3, "#ff9999");
+    dot(c, eyLx - 2, eyY + 3, "#ffbbbb");
+    dot(c, eyRx + ew + 1, eyY + 3, "#ffbbbb");
+  } else if (gender === "female" && face !== "fierce" && face !== "serious") {
+    dot(c, eyLx - 1, eyY + 2, "#ffcccc");
+    dot(c, eyRx + ew, eyY + 2, "#ffcccc");
+  }
+}
+
+function drawBody(c: PixelData, bp: BP, sk: string, sh: string, hi: string, ol: string, eye: string, gender: Gender = "male", face: FaceVariant = "standard") {
   const { hx, hy, hw, hh } = bp;
 
   // Head shape (rounded rectangle via insets)
-  fill(c, hx + 2, hy, hw - 4, 1, ol);         // top edge
-  fill(c, hx + 1, hy + 1, 1, 1, ol);           // top-left corner
-  fill(c, hx + hw - 2, hy + 1, 1, 1, ol);      // top-right corner
-  fill(c, hx, hy + 2, 1, hh - 4, ol);          // left edge
-  fill(c, hx + hw - 1, hy + 2, 1, hh - 4, ol); // right edge
-  fill(c, hx + 1, hy + hh - 2, 1, 1, ol);      // bottom-left
-  fill(c, hx + hw - 2, hy + hh - 2, 1, 1, ol); // bottom-right
-  fill(c, hx + 2, hy + hh - 1, hw - 4, 1, ol); // bottom edge
+  fill(c, hx + 2, hy, hw - 4, 1, ol);
+  fill(c, hx + 1, hy + 1, 1, 1, ol);
+  fill(c, hx + hw - 2, hy + 1, 1, 1, ol);
+  fill(c, hx, hy + 2, 1, hh - 4, ol);
+  fill(c, hx + hw - 1, hy + 2, 1, hh - 4, ol);
+  fill(c, hx + 1, hy + hh - 2, 1, 1, ol);
+  fill(c, hx + hw - 2, hy + hh - 2, 1, 1, ol);
+  fill(c, hx + 2, hy + hh - 1, hw - 4, 1, ol);
 
   // Head fill
-  fill(c, hx + 2, hy + 1, hw - 4, 1, hi);      // forehead highlight
-  fill(c, hx + 1, hy + 2, hw - 2, hh - 4, sk); // main face
-  fill(c, hx + 2, hy + hh - 2, hw - 4, 1, sk); // chin
-  // Cheek shadow
+  fill(c, hx + 2, hy + 1, hw - 4, 1, hi);
+  fill(c, hx + 1, hy + 2, hw - 2, hh - 4, sk);
+  fill(c, hx + 2, hy + hh - 2, hw - 4, 1, sk);
   fill(c, hx + 1, hy + Math.floor(hh * 0.6), 1, 2, sh);
   fill(c, hx + hw - 2, hy + Math.floor(hh * 0.6), 1, 2, sh);
-  // Under-chin shadow
   fill(c, hx + 3, hy + hh - 1, hw - 6, 1, sh);
 
-  // Eyes (2 wide x 2 tall with pupil + highlight)
-  const ew = bp.eyW;
-  // Left eye
-  fill(c, bp.eyLx, bp.eyY, ew, 2, "#ffffff");
-  dot(c, bp.eyLx, bp.eyY + 1, eye);
-  dot(c, bp.eyLx + ew - 1, bp.eyY, "#ffffff"); // highlight stays white
-  // Right eye
-  fill(c, bp.eyRx, bp.eyY, ew, 2, "#ffffff");
-  dot(c, bp.eyRx, bp.eyY + 1, eye);
-  dot(c, bp.eyRx + ew - 1, bp.eyY, "#ffffff");
-
-  // Eyebrows
-  fill(c, bp.eyLx - 1, bp.eyY - 1, ew + 1, 1, ol);
-  fill(c, bp.eyRx, bp.eyY - 1, ew + 1, 1, ol);
-
-  // Nose (small triangle)
-  dot(c, bp.noseX, bp.noseY, sh);
-  dot(c, bp.noseX - 1, bp.noseY + 1, sh);
-
-  // Mouth
-  fill(c, bp.noseX - Math.floor(bp.mouthW / 2), bp.mouthY, bp.mouthW, 1, sh);
-  dot(c, bp.noseX - Math.floor(bp.mouthW / 2) + 1, bp.mouthY, "#c06060"); // lip color
+  // Gender jaw shape
+  if (gender === "female") {
+    // Softer, narrower chin
+    if (hy + hh - 2 >= 0 && hy + hh - 2 < GRID) {
+      c[hy + hh - 2][hx + 1] = sk;
+      c[hy + hh - 2][hx + hw - 2] = sk;
+    }
+  } else {
+    // Slightly squarer jaw
+    dot(c, hx + 1, hy + hh - 2, sh);
+    dot(c, hx + hw - 2, hy + hh - 2, sh);
+  }
 
   // Neck
   fill(c, bp.nkX, bp.nkY, bp.nkW, bp.nkH, sh);
@@ -200,15 +293,29 @@ function drawBody(c: PixelData, bp: BP, sk: string, sh: string, hi: string, ol: 
   fill(c, bp.tX, bp.tY, bp.tW, bp.tH, sk);
   fill(c, bp.tX, bp.tY, 1, bp.tH, sh);
   fill(c, bp.tX + bp.tW - 1, bp.tY, 1, bp.tH, sh);
-  // Belly highlight
   fill(c, bp.tX + Math.floor(bp.tW / 2) - 1, bp.tY + 1, 2, 2, hi);
+
+  // Female body shape: waist taper + hip flare
+  if (gender === "female") {
+    const waistY = bp.tY + Math.floor(bp.tH * 0.45);
+    for (let wy = waistY; wy <= waistY + 1 && wy < GRID; wy++) {
+      if (wy >= 0) {
+        c[wy][bp.tX] = null;
+        c[wy][bp.tX + bp.tW - 1] = null;
+        if (bp.tX + 1 < GRID) c[wy][bp.tX + 1] = sh;
+        if (bp.tX + bp.tW - 2 >= 0) c[wy][bp.tX + bp.tW - 2] = sh;
+      }
+    }
+    // Hip flare
+    fill(c, bp.lLx - 1, bp.lY, 1, 2, sk);
+    fill(c, bp.lRx + bp.lW, bp.lY, 1, 2, sk);
+  }
 
   // Arms
   fill(c, bp.aLx, bp.aY, bp.aW, bp.aH, sk);
   fill(c, bp.aLx, bp.aY, 1, bp.aH, sh);
   fill(c, bp.aRx, bp.aY, bp.aW, bp.aH, sk);
   fill(c, bp.aRx + bp.aW - 1, bp.aY, 1, bp.aH, sh);
-  // Hands
   fill(c, bp.aLx, bp.aY + bp.aH, bp.aW, 1, sh);
   fill(c, bp.aRx, bp.aY + bp.aH, bp.aW, 1, sh);
 
@@ -223,6 +330,9 @@ function drawBody(c: PixelData, bp: BP, sk: string, sh: string, hi: string, ol: 
   fill(c, bp.fLx + 1, bp.fY, bp.fW - 1, 1, sk);
   fill(c, bp.fRx, bp.fY, bp.fW, 2, sh);
   fill(c, bp.fRx + 1, bp.fY, bp.fW - 1, 1, sk);
+
+  // Face features
+  drawFace(c, bp, sh, hi, ol, eye, gender, face);
 }
 
 // ─── HAIR STYLES ───
@@ -621,6 +731,8 @@ export function renderCharacter(config: AvatarConfig, characterClass: CharacterC
   const c = canvas();
   const shape = ((config as any).body_shape ?? "normal") as BodyShape;
   const eyeSlug = (config as any).eye_color ?? "dark";
+  const gender = ((config as any).gender ?? "male") as Gender;
+  const faceVariant = ((config as any).face_variant ?? "standard") as FaceVariant;
   const skin = SKIN_PALETTE[config.body_color] ?? SKIN_PALETTE.light;
   const eye = EYE_COLORS[eyeSlug] ?? EYE_COLORS.dark;
   const hairCol = config.hair_color ? HAIR_PALETTE[config.hair_color] ?? HAIR_PALETTE.brown : null;
@@ -628,7 +740,7 @@ export function renderCharacter(config: AvatarConfig, characterClass: CharacterC
   const bp = BP_MAP[shape] ?? BP_MAP.normal;
 
   if (config.cape) drawEquipmentCape(c, bp, cp);
-  drawBody(c, bp, skin.main, skin.shadow, skin.hi, skin.outline, eye);
+  drawBody(c, bp, skin.main, skin.shadow, skin.hi, skin.outline, eye, gender, faceVariant);
   drawOutfit(c, characterClass, bp, cp);
   if (config.armor) drawEquipmentArmor(c, bp, cp);
   if (config.hair_style && hairCol) drawHair(c, config.hair_style, bp, hairCol.main, hairCol.shadow, hairCol.hi);

@@ -8,6 +8,8 @@ import {
   EYE_COLOR_OPTIONS,
   HAIR_STYLES,
   HAIR_COLORS,
+  GENDER_OPTIONS,
+  FACE_VARIANTS,
 } from "@/lib/spriteResolver";
 import { CLASS_CONFIG } from "@/lib/wizard";
 import type { AvatarConfig, CharacterClass } from "@/lib/database.types";
@@ -20,7 +22,7 @@ interface AvatarEditorProps {
   onClassChange?: (cls: CharacterClass) => void;
 }
 
-type EditTab = "body" | "hair" | "class";
+type EditTab = "body" | "face" | "hair" | "class";
 
 function Label({ children }: { children: string }) {
   return (
@@ -48,6 +50,8 @@ export function AvatarEditor({ config, characterClass, level, onChange, onClassC
 
   const currentShape = (config as any).body_shape ?? "normal";
   const currentEye = (config as any).eye_color ?? "dark";
+  const currentGender = (config as any).gender ?? "male";
+  const currentFace = (config as any).face_variant ?? "standard";
 
   if (showClassPicker && onClassChange) {
     return (
@@ -69,7 +73,7 @@ export function AvatarEditor({ config, characterClass, level, onChange, onClassC
 
       {/* Tabs */}
       <View className="flex-row gap-1 mx-4 mb-2 bg-dark-100 rounded-lg border-2 border-dark-50 p-1">
-        {([{ key: "body", label: "Kropp" }, { key: "hair", label: "Har" }, { key: "class", label: "Klasse" }] as const).map((tab) => (
+        {([{ key: "body", label: "Kropp" }, { key: "face", label: "Ansikt" }, { key: "hair", label: "Hår" }, { key: "class", label: "Klasse" }] as const).map((tab) => (
           <TouchableOpacity
             key={tab.key}
             className={`flex-1 rounded-md py-2 ${activeTab === tab.key ? "bg-primary-500" : ""}`}
@@ -113,6 +117,44 @@ export function AvatarEditor({ config, characterClass, level, onChange, onClassC
             <View className="flex-row flex-wrap gap-2">
               {EYE_COLOR_OPTIONS.map((e) => (
                 <Swatch key={e.slug} hex={e.hex} label={e.label} selected={currentEye === e.slug} onPress={() => onChange({ eye_color: e.slug } as any)} />
+              ))}
+            </View>
+          </View>
+        )}
+
+        {activeTab === "face" && (
+          <View className="pb-8">
+            {/* Gender */}
+            <Label>Kjønn</Label>
+            <View className="flex-row gap-3">
+              {GENDER_OPTIONS.map((g) => (
+                <TouchableOpacity
+                  key={g.slug}
+                  onPress={() => onChange({ gender: g.slug } as any)}
+                  className={`flex-1 rounded-lg border-2 py-3 items-center ${currentGender === g.slug ? "border-primary-400 bg-primary-500/10" : "border-dark-50"}`}
+                >
+                  <Text className="text-2xl mb-1">{g.emoji}</Text>
+                  <Text className={`font-pixel text-[9px] ${currentGender === g.slug ? "text-primary-300" : "text-white/40"}`}>{g.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Face variants with head previews */}
+            <Label>Ansiktstype</Label>
+            <View className="flex-row flex-wrap gap-2">
+              {FACE_VARIANTS.map((fv) => (
+                <TouchableOpacity
+                  key={fv.slug}
+                  onPress={() => onChange({ face_variant: fv.slug } as any)}
+                  className={`rounded-lg border-2 p-2 items-center w-[72px] ${currentFace === fv.slug ? "border-primary-400 bg-primary-500/10" : "border-dark-50"}`}
+                >
+                  <HeadPreview
+                    config={{ ...config, face_variant: fv.slug, hair_style: null } as any}
+                    characterClass={characterClass}
+                    size={48}
+                  />
+                  <Text className="text-[9px] text-white/50 mt-1">{fv.label}</Text>
+                </TouchableOpacity>
               ))}
             </View>
           </View>
