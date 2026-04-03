@@ -4,8 +4,11 @@
 
 Skjermer, logikk, styling, tekst – alt som ikke er native kode.
 
-```bash
-eas update --branch preview --message "Kort beskrivelse av hva som er nytt"
+NOVA: KOPIER ALT FRA DEN BLÅ TIL DEN LILLA INN I TERMINALEN NÅR DU SKAL SENDE EN OPPDATERING AV APPEN TIL IPHONEN DIN
+LAG DIN EGEN MELDING PÅ SLUTTEN I STEDET FOR DET SOM STÅR DER NÅ
+```powershell
+$env:EXPO_TOKEN=(Get-Content .env | Select-String "EXPO_TOKEN" | ForEach-Object { $_.ToString().Split("=")[1] })
+C:\Users\maria\AppData\Roaming\npm\eas.ps1 update --branch preview --message "Kort beskrivelse av hva som er nytt"
 ```
 
 Appen oppdaterer seg selv neste gang den åpnes. Ingen ny installasjon.

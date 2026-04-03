@@ -43,6 +43,87 @@ Appen er kun for intern bruk i familien – ingen skalering nødvendig.
 
 ---
 
+## Karaktersystem (avatar)
+
+Hvert familiemedlem har en proseduralt generert piksel-karakter (32×32 grid, CryptoPunks-stil) som rendres direkte i React Native via `@shopify/react-native-skia`.
+
+### Karakterklasser
+
+| Klasse | Norsk | Farge | Utstyr |
+|--------|-------|-------|--------|
+| `wizard` | Trollmann | Lilla | Stav med kule, kappe, hatt |
+| `knight` | Ridder | Rød | Sverd, skjold, rustning, hjelm |
+| `druid` | Druid | Grønn | Naturstav, gevirkrone, sandaler |
+| `rogue` | Skurk | Gull | Tosidige dolker, lærdrakt |
+
+### Kjønnsvarianter
+
+Velges i **Ansikt**-fanen i avataredigereren. Lagres som `gender` i `avatar_config`.
+
+| Verdi | Visuelle forskjeller |
+|-------|----------------------|
+| `male` (standard) | Firkantet kjeve, standard skuldrer |
+| `female` | Smalere midje (taper), hofteflare, vipper, rosa kinner |
+
+### Ansiktsvarianter
+
+6 uttrykk å velge i – vises som miniatyrbilder av hodet i editoren. Lagres som `face_variant` i `avatar_config`.
+
+| Variant | Øyne | Øyebryn | Munn |
+|---------|------|---------|------|
+| `standard` | 2×2 normale | Flate | Rett linje + lepper |
+| `round` | 2×3 store | Buede | Rett |
+| `smiling` | Smalte lykkebuer | Standard | U-formet smil |
+| `serious` | Standard | Tykke og lave | Tynn rett linje |
+| `cute` | 2×3 store | Høye buede | Smil + rosende kinn |
+| `fierce` | Standard | V-formet (skremmende) | Tynn rett linje |
+
+### Hårfrisyrer
+
+8 stiler: `plain`, `long`, `mohawk`, `messy`, `ponytail`, `braids`, `curly`, `bob`  
+10 farger: blond, brun, svart, rød, blå, grønn, lilla, rosa, sølv, hvit
+
+### Kroppsformer
+
+4 former: `normal`, `small` (liten), `tall` (høy), `wide` (bred)
+
+### AvatarEditor – faner
+
+| Fane | Innhold |
+|------|---------|
+| **Kropp** | Kroppsform (silhuettminiatyr), hudfarge, øyefarge |
+| **Ansikt** | Kjønn (gutt/jente), ansiktstype (6 varianter med hodeminiatur) |
+| **Hår** | Hårstil (hodeminiatur per stil), hårfarge |
+| **Klasse** | Vis aktiv klasse, bytt klasse |
+
+### Utstyr (wardrobe)
+
+Utstyr rendres som overlays på toppen av grunnkroppen:
+
+- `hat` – klassespesifikk hodeplagg
+- `armor` – brystplate med skulderpolstre
+- `cape` – kappe på begge sider
+- `weapon` – klassespesifikt våpen (høyre hånd)
+- `shield` – skjold (kun ridder, venstre hånd)
+- `familiar` – liten følgesvenn (katt, ugle, baby-drage, fugl)
+
+### Relevante filer
+
+```
+lib/pixelPatterns.ts        Hele piksel-renderingsmotoren (tegner kropp, ansikt, hår, utstyr)
+lib/spriteResolver.ts       Konstanter: farger, stiler, kjønn, ansiktsvarianter
+lib/database.types.ts       AvatarConfig-typen
+components/wizard/
+  CharacterRenderer.tsx     Skia Canvas-komponent som viser pikselfiguren
+  AvatarEditor.tsx          Fane-basert editor (Kropp / Ansikt / Hår / Klasse)
+  ClassPicker.tsx           Velger for karakterklasse
+  SkillTreeView.tsx         Ferdighetstre per klasse
+app/wardrobe.tsx            Utstyrsskjerm
+app/(auth)/create-character.tsx  Opprettelsesflyt for nye karakterer
+```
+
+---
+
 ## Poengalgoritme
 
 Hver aktivitetstype har en konfigurerbar `points_per_minute`-verdi:
