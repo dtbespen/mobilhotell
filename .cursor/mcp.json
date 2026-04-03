@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "buildcad-ai": {
+      "type": "streamable-http",
+      "url": "https://buildcad.ai/api/mcp"
+    }
+  }
+}

@@ -28,13 +28,31 @@ Fysisk mobilhotell med 5 slotter (en per familiemedlem), IR-sensorer, statuslys 
 | 8 | USB-hub 5-port (for lading av telefoner) | 1 stk | [Kjell & Company](https://www.kjell.com/no/produkter/data-og-tilbehor/usb-og-thunderbolt/usb-huber/) | ~149 kr |
 | 9 | Korte USB-kabler 20 cm | 5 stk | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=short+usb+cable+20cm+5+pack) | ~60 kr |
 
-### Til kasettet (fysisk mobilhotell)
+### Til kabinettet (fysisk mobilhotell)
 
-| # | Komponent | Lenke | Estimert pris |
-|---|---|---|---|
-| 10 | MDF-plate 3–4 mm eller kryssfiner | [Clas Ohlson](https://www.clasohlson.com/no/MDF-plates/c/5308) | ~70 kr |
-| 11 | Akrylmaling – hvit + grønn (#2DC653) | [Clas Ohlson](https://www.clasohlson.com/no/paint-accessories/c/5317) | ~50 kr |
-| 12 | Trelim | Clas Ohlson / Biltema | ~40 kr |
+| # | Komponent | Antall | Lenke | Estimert pris |
+|---|---|---|---|---|
+| 10 | MDF-plate 3mm (600×300mm eller større) | 2 stk | [Panduro](https://www.panduro.com/nb-no/produkter/hobby/trelast/plater/mdf-plate-3-mm-a4-297x210-mm-610101) / [Byggmax](https://www.byggmax.no) | ~100 kr |
+| 11 | Akrylplate opalhvit 3mm (LED-diffuser) | 1 stk | [Biltema](https://www.biltema.no/bygg/platematerialer/pleksiglass/akrylplast-opalhvit-1200-x-800-x-4-mm-2000034953) | ~149 kr |
+| 12 | Akrylplate røykfarget/sotfarget 3mm | 1 stk | [Glassbutikk.no](https://www.glassbutikk.no/produkt/akryl-plexiglass-gra-sotfarget-10mm/) | ~200 kr |
+| 13 | Akrylmaling hvit (spray eller pensel) | 1 stk | [Clas Ohlson](https://www.clasohlson.com/no/Spraymaling/p/34-8621) | ~79 kr |
+| 14 | Akrylmaling grønn (#2DC653) | 1 stk | [Panduro](https://www.panduro.com/nb-no/produkter/maling) | ~50 kr |
+| 15 | Trelim (PVA) | 1 stk | [Biltema](https://www.biltema.no/bygg/lim/trelim/) | ~49 kr |
+| 16 | Skruer 3×12mm (for sensorfeste) | 10 stk | [Biltema](https://www.biltema.no/bygg/festemidler/skruer/) | ~29 kr |
+
+**Total kasett-materialer: ~650–750 kr**
+
+---
+
+## Verifiserte komponentmål
+
+| Komponent | Mål (L × B × H) | Kilde |
+|-----------|-----------------|-------|
+| ESP32 NodeMCU 30-pin | 54 × 25.5 × 12 mm | [Datasheet](https://mischianti.org/esp32-nodemcu-32s-esp-32s-kit-high-resolution-pinout-datasheet-and-specs) |
+| Breadboard 830 hull | 165 × 54 × 10 mm | Produsent-data |
+| IR-sensor FC-51 | 32 × 14 × 8 mm | [Datasheet](https://elkim.no/produkt/ir-infrared-obstacle-sensor-infrarod-hindringsdeteksjonsmodul/) |
+| OLED 0.96" display | 27 × 27 × 4 mm (skjerm) | [Datasheet](https://elkim.no/produkt/0-96-i2c-iic-serial-12864-oled-lcd-screen-display-module-for-arduino-raspberry-osv/) |
+| LED 5mm | Ø5 × 8 mm | Standard |
 
 ---
 
@@ -179,10 +197,34 @@ Telefonen skyves inn og reflekterer IR-strålen tilbake → sensor registrerer `
 
 Sensoren har 3 mm skruehull – skrus fast i bunn eller side av sloten.
 
-### LED-montering
+### LED-montering bak diffusert akryl
 
-En 3 mm LED monteres i et lite hull bohret i fronten av mobilhotellet,
-rett over eller ved siden av åpningen til sloten. Lyser grønt når telefonen er inne.
+For et polert utseende monteres LED-ene bak en stripe med **opalhvit eller røykfarget akryl** (3mm).
+Dette gir et diffust, mykt lys i stedet for punktlyskilder.
+
+**Design:**
+```
+Front-panel (tverrsnitt):
+┌─────────────────────────────────────────────────┐
+│                                                 │
+│   ┌─────────────────────────────────────────┐   │
+│   │  ● LED   ● LED   ● LED   ● LED   ● LED  │   │  ← LED-er bak
+│   │  ═══════════════════════════════════════│   │    akrylplate
+│   └─────────────────────────────────────────┘   │
+│                                                 │
+│   ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐     │
+│   │     │ │     │ │     │ │     │ │     │     │  ← Slotter
+└───┴─────┴─┴─────┴─┴─────┴─┴─────┴─┴─────┴─────┘
+```
+
+**Materialer:**
+- Akrylplate opalhvit 3mm fra [Biltema](https://www.biltema.no/bygg/platematerialer/pleksiglass/akrylplast-opalhvit-1200-x-800-x-4-mm-2000034953) (~149 kr)
+- Alternativt: Røykfarget akryl fra [Glassbutikk.no](https://www.glassbutikk.no) for mørkere look
+
+**LED-montering:**
+- 5 mm grønne LED-er med 220Ω motstand
+- Plasser LED 5-10mm bak akrylplaten for optimal diffusjon
+- Drill 5mm hull i MDF-fronten, LED stikkes gjennom bakfra
 
 ### OLED-montering
 
@@ -208,15 +250,93 @@ eller på siden av kasettet. Viser live-status for hele familien uten at man tre
   └──────┴──────┴──────┴──────┴──────┘
 ```
 
-### Kasettet (mål for 5 slotter)
+### Kabinettet (korrigerte mål for 5 slotter)
 
-- Totalbredde: ca. 65 cm
-- Høyde: ca. 22 cm
-- Dybde: ca. 14 cm
-- Slotbredde per plass: ca. 11 cm
-- Slotdybde: ca. 12 cm (nok til de fleste telefoner med deksel)
-- Skillevegg-tykkelse: ca. 4 mm (MDF)
-- Basen (der elektronikken skjules): ca. 6 cm høy
+**Ytre mål:**
+- Totalbredde: **654 mm** (65.4 cm)
+- Totalhøyde: **220 mm** (22 cm)
+- Totaldybde: **140 mm** (14 cm)
+
+**Indre mål:**
+- Slotbredde per plass: **125 mm** (like store slotter!)
+- Slothøyde: **150 mm**
+- Slotdybde: **120 mm** (plass til telefon med deksel)
+- Skillevegg-tykkelse: **3 mm** (MDF)
+- Elektronikkbase høyde: **60 mm**
+
+**Beregning (korrigert):**
+```
+Indre bredde:     654 - 2×3 = 648 mm
+5 slotter:        5 × 125 = 625 mm
+4 skillevegger:   4 × 3 = 12 mm
+Frontlist:        2 × 5 = 10 mm (for LED-diffuser)
+Totalt:           625 + 12 + 10 = 647 mm ✓
+```
+
+**Telefonstøtte (VIKTIG):**
+Telefonene må ha støtte for å stå oppreist. To alternativer:
+
+**Alt A: Skrå bunn (15°)**
+```
+Side-visning av slot:
+        ┌───────────────┐
+        │               │
+        │    📱        │  ← Telefon lener mot bakvegg
+        │   /          │
+        │  /           │
+        └─/────────────┘
+         ↑
+      15° vinkel på bunnen
+```
+
+**Alt B: Støttelist**
+```
+        ┌───────────────┐
+        │               │
+        │    📱        │
+        │    │          │
+        │   ═══         │  ← 10mm list telefonen hviler på
+        └───────────────┘
+```
+
+---
+
+## Elektronikkbase (skjult under slottene)
+
+Elektronikkbasen er **60 mm høy** og har indre mål på ca. **648 × 134 mm**.
+
+**Plassering av komponenter:**
+```
+┌───────────────────────────────────────────────────────────────────┐
+│                                                                   │
+│   ┌──────────────────┐   ┌──────────┐   ┌──────────────────────┐ │
+│   │    Breadboard    │   │  USB-hub │   │   Kabler og          │ │
+│   │    165 × 54 mm   │   │ ~100×30  │   │   tilkobling         │ │
+│   │    + ESP32       │   │ (valgfri)│   │                      │ │
+│   └──────────────────┘   └──────────┘   └──────────────────────┘ │
+│                                                                   │
+│   [  Kabelhull 1  ] [  Kabelhull 2  ] ... [  Kabelhull 5  ]      │
+│         ↓               ↓                       ↓                │
+└───────────────────────────────────────────────────────────────────┘
+          til slot 1      til slot 2            til slot 5
+```
+
+**Kabelhull (5 stk):**
+- Diameter: **15 mm**
+- Plassering: Ett hull under hver slot for sensorkabler
+- Fra base til slot: Sensor-kablene (VCC, GND, OUT) føres gjennom
+
+**Ventilasjon:**
+- 2-3 ventilasjonshull (10mm) i bakveggen for ESP32-kjøling
+- Plasseres nær ESP32-posisjonen
+
+**Strøminntak:**
+- Ett hull (10mm) for Micro-USB kabel til ESP32
+- Plasseres på siden eller bak
+
+**Vedlikehold:**
+- Avtakbar bunnplate eller bakplate anbefales
+- Festet med skruer (ikke lim) for enkel tilgang
 
 ---
 
@@ -312,3 +432,43 @@ IP-adressen konfigureres én gang i Settings-skjermen.
 - **Kabelrot:** Fargekod kablene – rød = VCC, sort = GND, deretter en farge per slot for signalledningene
 - **OLED viser ingenting:** Sjekk at `Wire.begin(32, 33)` er kalt før `display.begin()` i firmware. Sjekk også I2C-adressen – prøv `0x3C` og `0x3D` (de fleste 0.96" moduler bruker `0x3C`)
 - **OLED viser feil tekst:** OLED oppdateres av ESP32 direkte og er ikke avhengig av appen. Sjekk at sensor-GPIO-statusen leses riktig i firmware
+
+---
+
+## Design-sjekkliste
+
+### Fysisk design
+- [ ] Like store slotter (125mm hver)
+- [ ] Telefonstøtte (skråbunn 15° eller støttelist)
+- [ ] LED-er bak diffusert akryl for mykt lys
+- [ ] Sensorer montert i bakkant av hver slot
+- [ ] Kabelhull fra hver slot til elektronikkbase
+- [ ] Ventilasjonshull for ESP32
+- [ ] Avtakbar bakplate for vedlikehold
+- [ ] Hull for strømkabel (Micro-USB)
+
+### Materialer (faktiske produkter)
+- [x] ESP32 NodeMCU CH9102X – [elkim.no](https://elkim.no/produkt/esp32-ch9102x/)
+- [x] IR-sensorer FC-51 (5 stk) – [elkim.no](https://elkim.no/produkt/ir-infrared-obstacle-sensor-infrarod-hindringsdeteksjonsmodul/)
+- [x] OLED 0.96" display – [elkim.no](https://elkim.no/produkt/0-96-i2c-iic-serial-12864-oled-lcd-screen-display-module-for-arduino-raspberry-osv/)
+- [x] Grønne LED-er 5mm – [elkim.no](https://elkim.no/produktkategori/komponenter/led-komponenter/)
+- [x] Motstander 220Ω – [elkim.no](https://elkim.no/produktkategori/komponenter/led-komponenter/)
+- [x] Breadboard 830 hull – [elkim.no](https://elkim.no/produkt/koblingsbrett-breadboard/)
+- [x] Jumperkabler – [elkim.no](https://elkim.no/produkt/jumper-kabel-40x10-cm-flere-variasjoner/)
+- [ ] MDF-plater 3mm – [Panduro](https://www.panduro.com) / [Byggmax](https://www.byggmax.no)
+- [ ] Akrylplate opalhvit – [Biltema](https://www.biltema.no/bygg/platematerialer/pleksiglass/)
+- [ ] Trelim – [Biltema](https://www.biltema.no/bygg/lim/trelim/)
+- [ ] Maling (hvit + grønn) – [Clas Ohlson](https://www.clasohlson.com/no)
+
+### Elektronikk-verifikasjon
+- [ ] Alle komponenter passer i 60mm høy base
+- [ ] Breadboard (165×54mm) + ESP32 + USB-hub = ~315mm (648mm tilgjengelig ✓)
+- [ ] Sensor-kabler (10cm) når fra slot til base
+- [ ] OLED-kabel (10-15cm) når fra base til frontpanel
+
+### Før bygging
+- [ ] Last ned og test firmware på breadboard
+- [ ] Verifiser at alle sensorer fungerer
+- [ ] Test OLED-display med riktig I2C-adresse
+- [ ] Mål opp og tegn alle deler på papir først
+- [ ] Lag papp-prototype av én slot for å teste telefonstørrelse
