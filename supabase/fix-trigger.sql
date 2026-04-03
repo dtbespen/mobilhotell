@@ -13,7 +13,8 @@ begin
     (new.id, 'Lese bok', 'reading', 2, '📚', true),
     (new.id, 'Lydbok', 'reading', 2, '🎧', true),
     (new.id, 'Lage ting', 'creating', 2, '🎨', true),
-    (new.id, 'Mobilhotell', 'screen_free', 1.5, '🏨', true);
+    (new.id, 'Mobilhotell', 'screen_free', 1.5, '🏨', true),
+    (new.id, 'Bonus Mana', 'custom', 0, '🎁', true);
   return new;
 end;
 $$;

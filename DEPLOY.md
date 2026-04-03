@@ -5,7 +5,7 @@
 Skjermer, logikk, styling, tekst – alt som ikke er native kode.
 
 ```bash
-eas update --branch production --message "Kort beskrivelse av hva som er nytt"
+eas update --branch preview --message "Kort beskrivelse av hva som er nytt"
 ```
 
 Appen oppdaterer seg selv neste gang den åpnes. Ingen ny installasjon.
@@ -17,7 +17,7 @@ Appen oppdaterer seg selv neste gang den åpnes. Ingen ny installasjon.
 Eksempler: Screen Time API, push-varsler, Bluetooth, kamera.
 
 ```bash
-eas build --platform ios --profile production
+eas build --platform ios --profile preview
 ```
 
 Når builden er ferdig får du en install-link. Send den til alle med telefon i familien – de må åpne lenken og installere på nytt.
@@ -38,15 +38,6 @@ Når builden er ferdig får du en install-link. Send den til alle med telefon i 
 
 ---
 
-## Grener (branches)
-
-| Branch | Bruk |
-|---|---|
-| `development` | Testing internt |
-| `production` | Familien får oppdateringen |
-
----
-
 ## Nyttige kommandoer
 
 ```bash
@@ -58,5 +49,5 @@ eas update:list
 
 # Legg til ny telefon (UDID) og bygg på nytt
 eas device:create
-eas build --platform ios --profile development
+eas build --platform ios --profile preview
 ```

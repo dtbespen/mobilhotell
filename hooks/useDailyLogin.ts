@@ -87,18 +87,38 @@ export function useDailyLogin() {
 
   async function logBonusManaActivity(profileId: string, mana: number, source: string) {
     const now = new Date().toISOString();
-    const { data: types } = await supabase
+    const familyId = profile?.family_id;
+    if (!familyId) return;
+
+    let { data: typeRow } = await supabase
       .from("activity_types")
       .select("id")
+      .eq("family_id", familyId)
       .eq("category", "custom")
       .limit(1)
       .single();
 
-    if (!types) return;
+    if (!typeRow) {
+      const { data: created } = await supabase
+        .from("activity_types")
+        .insert({
+          family_id: familyId,
+          name: "Bonus Mana",
+          category: "custom",
+          points_per_minute: 0,
+          icon: "🎁",
+          is_default: true,
+        })
+        .select("id")
+        .single();
+      typeRow = created;
+    }
+
+    if (!typeRow) return;
 
     await supabase.from("activities").insert({
       profile_id: profileId,
-      activity_type_id: types.id,
+      activity_type_id: typeRow.id,
       started_at: now,
       ended_at: now,
       duration_minutes: 0,
