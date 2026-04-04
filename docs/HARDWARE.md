@@ -56,9 +56,9 @@ Kassen er tegnet for **vanlige iPhone-størrelser** (15/16-serien) med **tynt de
 - **Dekkflate:** **408 mm** langs **X** (5×80 mm + 4×2 mm glippe) × **170 mm** langs **Y** (én sammenhengende flate).
 - **Elektronikk under:** Breadboard **165×54 mm** + hub **100×50 mm** typisk ligger **side om side langs X** under dekket – innvendig gulv **~412×170 mm** rommer dette (mål [hub](https://www.kjell.com/no/produkter/data-og-tilbehor/usb-og-thunderbolt/usb-huber/) du kjøper).
 - **Basehøyde:** **38 mm** i CAD = tilstrekkelig til høyeste del under hyllen (typisk USB-hub **23 mm** + avstand fra bunn) + **litt** plass til kabler. Tykkere hub, større kontakter eller mye kabler → øk `baseHeight` i KCL.
-- **Høyde:** `totalHeight` i KCL følger **hele kassen** rundt skrå puta: `tiltDeckTopZ` = høyeste punkt på filt (bak) fra trigonometri med **11°**, pluss **`lidClearance`** og lokk (**`wall`**). Typisk **~100 mm** ytre høyde (ikke bare «løft puta» – **sidevegger** og **topp** rommer vinkelen). Dekk **408×170 mm** i **3 mm** MDF; ved behov **4–6 mm** (`deckMdf` i KCL).
+- **Høyde:** `totalHeight` i KCL = **åpen topp** (ingen horisontal lokk i CAD): `tiltDeckTopZ` er høyeste punkt på filt (bak) med **11°**, pluss **`topRimClearance`**. **Bakvegg** har flat topp @ `stackTop`. **Sidevegger** har **skrå toppkant** (samme stigning som puta i YZ) fra lav foran til `stackTop` ved inner bak, deretter horisontalt siste **3 mm** mot ytter bak (møter bakvegg). Typisk **~97 mm** som maks (bak). Dekk **408×170 mm** i **3 mm** MDF; ved behov **4–6 mm** (`deckMdf` i KCL).
 
-**Ytre mål (fra CAD):** bredde **418 mm**, dybde **176 mm**, høyde **~100 mm** (vegger + horisontal toppplate over skrå puta).
+**Ytre mål (fra CAD):** bredde **418 mm**, dybde **176 mm**, høyde **~97 mm** (vegger til toppkant; **ingen** lukket toppplate i modellen – matcher åpen Tesla-flate).
 
 **Ikke-iPhone:** Større enn tabellen – øk `iphoneWideMax` / `iphoneLongMax` (og evt. `neighborGap`) eller `deckDepth` i KCL proporsjonalt.
 
@@ -132,7 +132,7 @@ Fil: `hardware/cad/mobilhotell.kcl`. Modellen følger **innkjøpslisten** øvers
 | `#2f2f2f` | USB-hub (plastkabinett) | Rad 9 – [Kjell](https://www.kjell.com/no/produkter/data-og-tilbehor/usb-og-thunderbolt/usb-huber/) – **mål egen modell**; CAD bruker typisk fotavtrykk |
 | `#121820` | OLED 0,96" modul | Rad 7 – [elkim](https://elkim.no/produkt/0-96-i2c-iic-serial-12864-oled-lcd-screen-display-module-for-arduino-raspberry-osv/) |
 
-**Mål fra CAD:** `totalWidth` = **418 mm**, `totalDepth` = **176 mm**, `totalHeight` ≈ **100 mm** (`tiltDeckTopZ` + **`lidClearance`** + lokk; vegger strekker seg til samme høyde). Dekk **408×170 mm**: **MDF**, **polyeter** og **filt** har hver sin farge, samme **11°** rundt **akse [1,0,0]**, pivot på **fremskanten**; **IR** har samme transform. Kabel- og venthull er **subtract** i hylle/bakvegg.
+**Mål fra CAD:** `totalWidth` = **418 mm**, `totalDepth` = **176 mm**, `totalHeight` ≈ **97 mm** (`tiltDeckTopZ` + **`topRimClearance`**; **ingen** toppplate i KCL). Dekk **408×170 mm**: **MDF**, **polyeter** og **filt** har hver sin farge, samme **11°** rundt **akse [1,0,0]**, pivot på **fremskanten**; **IR** har samme transform. Kabel- og venthull er **subtract** i hylle/bakvegg.
 
 **Jumperkabler** og **USB-kabler** er ikke modellert (for små / variantrike); se innkjøpsliste rad 6 og 8–10.
 
@@ -331,7 +331,7 @@ eller på siden av kasettet. Viser live-status for hele familien uten at man tre
 
 ### Kabinettet – mål fra CAD (`mobilhotell.kcl`)
 
-**Ytre mål:** **418 × 176 × ~100 mm** (B × D × H). **Innvendig pute:** **408 × 170 mm** (flate størrelse; **skrå 10–12°**, CAD **11°**). **Base:** **38 mm** (juster om hub/kabler krever mer). Se [iPhone-mål og kassedimensjoner](#iphone-mål-og-kassedimensjoner-minimal).
+**Ytre mål:** **418 × 176 × ~97 mm** (B × D × H). **Innvendig pute:** **408 × 170 mm** (flate størrelse; **skrå 10–12°**, CAD **11°**). **Base:** **38 mm** (juster om hub/kabler krever mer). Se [iPhone-mål og kassedimensjoner](#iphone-mål-og-kassedimensjoner-minimal).
 
 **Farge → material → lenke:** [CAD-modell og fargekoder](#cad-modell-og-fargekoder).
 

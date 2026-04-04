@@ -47,18 +47,19 @@ feltThickness = 1
 deckPackThickness = deckMdf + foamThickness + feltThickness
 
 // Målområde avtalt: **10–12°**; modellen bruker **11°** rundt global X (se puta under).
-// Høyde på **vegger + lokk** følger hellingen: maks Z på puta (filt bak) = pivotZ + deckDepth·sin(θ) + pakke·cos(θ).
-// (Ikke bare «løft puta» – hele kassen må være høy nok.) Juster sin/cos om du endrer vinkel uten trig i fil.
+// **Ingen toppplate i CAD** – åpen kasse (Tesla-åpen flate). Vegger stopper rett over høyeste punkt på filt + liten luft.
 deckTiltSin11 = 0.19105
 deckTiltCos11 = 0.98163
 tiltDeckTopZ = deckZStart + deckDepth * deckTiltSin11 + deckPackThickness * deckTiltCos11
-lidClearance = 2
-stackTop = tiltDeckTopZ + lidClearance
-totalHeight = stackTop + wall
+// Øverste filt foran (ved hengsel / Y = deckY0) – samme rotasjon som puta.
+tiltDeckFrontTopZ = deckZStart + deckPackThickness * deckTiltCos11
+topRimClearance = 2
+stackTop = tiltDeckTopZ + topRimClearance
+totalHeight = stackTop
+// Sidevegg: toppkant foran (ytre front Y = −totalDepth/2) = parallell medfilt + luft, ikke flat horisontal kant.
+sideWallTopZFrontOuter = tiltDeckFrontTopZ + topRimClearance - wall * deckTiltSin11
 
-// Vertikal «kake» (Z): Vegger (`totalHeight`) tilpasset **skrå puta** via `tiltDeckTopZ` + lokk + `lidClearance`.
-// bunnplate → elektronikk → hylle → luftrom (kabler + front) → skrå puta → horisontal toppplate.
-// IR følger samme rotasjon som puta.
+// Vertikal «kake»: bunnplate → elektronikk → hylle → luftrom → skrå puta; **åpen topp** (ingen horisontal lokk i modellen).
 
 deckLeftX = -totalWidth / 2 + wall + deckInsetX
 deckY0 = -totalDepth / 2 + wall
@@ -121,23 +122,29 @@ bunnplate = startSketchOn(XY)
 
 // ============================================================
 // 2–4. SIDEVEGGER + BAKVEGG
+// Sidevegger: profil i YZ, ekstrudert langs X – **skrå topp** (11° i YZ) som følger puta,
+// horisontal siste `wall` mm mot bak (møter bakvegg @ stackTop).
 // ============================================================
-venstreSide = startSketchOn(XY)
-  |> startProfile(at = [-totalWidth / 2, -totalDepth / 2])
-  |> xLine(length = wall)
-  |> yLine(length = totalDepth)
-  |> xLine(length = -wall)
+venstreSide = startSketchOn(offsetPlane(YZ, offset = -totalWidth / 2))
+  |> startProfile(at = [-totalDepth / 2, 0])
+  |> line(endAbsolute = [totalDepth / 2, 0])
+  |> line(endAbsolute = [totalDepth / 2, stackTop])
+  |> line(endAbsolute = [totalDepth / 2 - wall, stackTop])
+  |> line(endAbsolute = [deckY0, tiltDeckFrontTopZ + topRimClearance])
+  |> line(endAbsolute = [-totalDepth / 2, sideWallTopZFrontOuter])
   |> close()
-  |> extrude(length = totalHeight)
+  |> extrude(length = wall)
   |> appearance(color = "#d7c4b2", opacity = 55)
 
-hoyreSide = startSketchOn(XY)
-  |> startProfile(at = [totalWidth / 2 - wall, -totalDepth / 2])
-  |> xLine(length = wall)
-  |> yLine(length = totalDepth)
-  |> xLine(length = -wall)
+hoyreSide = startSketchOn(offsetPlane(YZ, offset = totalWidth / 2 - wall))
+  |> startProfile(at = [-totalDepth / 2, 0])
+  |> line(endAbsolute = [totalDepth / 2, 0])
+  |> line(endAbsolute = [totalDepth / 2, stackTop])
+  |> line(endAbsolute = [totalDepth / 2 - wall, stackTop])
+  |> line(endAbsolute = [deckY0, tiltDeckFrontTopZ + topRimClearance])
+  |> line(endAbsolute = [-totalDepth / 2, sideWallTopZFrontOuter])
   |> close()
-  |> extrude(length = totalHeight)
+  |> extrude(length = wall)
   |> appearance(color = "#d7c4b2", opacity = 55)
 
 bakveggBlank = startSketchOn(XY)
@@ -183,19 +190,7 @@ frontLedFelt = startSketchOn(offsetPlane(XY, offset = baseHeight + nameTagHeight
   |> appearance(color = "#cfe8ff", opacity = 45)
 
 // ============================================================
-// 7. TOPPPLATE (horisontal – underside @ `stackTop`, **over** høyeste punkt på skrå filt + `lidClearance`)
-// ============================================================
-toppplate = startSketchOn(offsetPlane(XY, offset = totalHeight - wall))
-  |> startProfile(at = [-totalWidth / 2, -totalDepth / 2])
-  |> xLine(length = totalWidth)
-  |> yLine(length = totalDepth)
-  |> xLine(length = -totalWidth)
-  |> close()
-  |> extrude(length = wall)
-  |> appearance(color = "#e8dfd6", opacity = 70)
-
-// ============================================================
-// 8. ELEKTRONIKKHYLLE (kabelhull = subtract, ikke løse sylindre)
+// 7. ELEKTRONIKKHYLLE (kabelhull = subtract, ikke løse sylindre)
 // ============================================================
 shelfBlank = startSketchOn(offsetPlane(XY, offset = baseHeight))
   |> startProfile(at = [-totalWidth / 2 + wall, -totalDepth / 2 + wall])
