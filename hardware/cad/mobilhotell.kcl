@@ -1,92 +1,107 @@
 // ============================================================
 // MOBILHOTELL – ÅPEN TOPP, MINIMAL KASSE (iPhone-mål)
-// Dokumentasjon + kilder: docs/HARDWARE.md
+// Versjon 2.0 – Forenklet design for bygging med sag (ingen fres)
+// Dokumentasjon + materialliste: docs/HARDWARE.md
 //
-// Puta (ovenfra): **Fem telefoner ved siden av hverandre** langs +X (smalside mot front).
-// **Langside** mot **bakvegg** (+Y) – som et «gjerde» av telefoner, ikke hale-i-hode langs bordet.
-// Per plass langs X: telefonbredde + deksel; inn mot bak: telefonlengde + deksel + litt luft.
-// **Skrå puta:** **10–12°** helling (CAD: **11°**) – bakre kant opp (bygg gjerne **kile bak** samme vinkel).
-// ============================================================
+// DESIGN:
+// - 6mm MDF vegger (oppgradert fra 3mm for enklere bygging)
+// - Hjørnelister 15x15mm innvendig for styrke
+// - Støttelister 10x10mm for å bære dekket
+// - Telefonflate: 6mm MDF + 10mm skum + 2mm kunstlær = 18mm totalt
+//   Modellert som enhetlig dekk (kunstlær wrapper rundt kanter)
+// - Forenklet sidevegger: én rett diagonal topp (ingen hakk)
+// - Frontpanel: ett stykke 424x54mm (OLED + LED-diffuser)
+// - Navn: vinyl-klistremerker (ikke separate plater)
+//
 // Koordinatsystem: XY = bunnplate, Z opp. Y+ mot bakvegg.
 // ============================================================
 
-// Apple offisielle mål (naken telefon), sammenligning:
+// Apple offisielle mål (naken telefon):
 // https://www.apple.com/iphone/compare/
 zoneCount = 5
 iphoneLongMax = 163    // mm langs Y på dekket (langside mot bakvegg)
 iphoneWideMax = 78     // mm per plass langs X (avrundet opp fra 77,8 mm)
 caseExtraLen = 3       // mm langs Y for tynt deksel
 caseExtraWide = 2      // mm ekstra bredde per telefon langs X
-deckFingerMargin = 4   // mm luft foran/bak langs Y (mot front / mot bak)
+deckFingerMargin = 4   // mm luft foran/bak langs Y
 neighborGap = 2        // mm mellom telefonkanter langs X
 
-phoneSpanX = iphoneWideMax + caseExtraWide
-slotPitchX = phoneSpanX + neighborGap
-deckW = zoneCount * phoneSpanX + (zoneCount - 1) * neighborGap
+phoneSpanX = iphoneWideMax + caseExtraWide      // 80mm per telefon
+slotPitchX = phoneSpanX + neighborGap           // 82mm senter-til-senter
+deckW = zoneCount * phoneSpanX + (zoneCount - 1) * neighborGap  // 408mm
 
-wall = 3
-deckInsetX = 2
-innerW = deckW + 2 * deckInsetX
-totalWidth = innerW + 2 * wall
+// === MATERIALER (6mm MDF for enklere bygging) ===
+wall = 6               // 6mm MDF vegger
+deckInsetX = 2         // mm innrykk fra innervegg til dekk
+innerW = deckW + 2 * deckInsetX                 // 412mm
+totalWidth = innerW + 2 * wall                  // 424mm
 
-deckDepth = iphoneLongMax + caseExtraLen + deckFingerMargin
-totalDepth = 2 * wall + deckDepth
+deckDepth = iphoneLongMax + caseExtraLen + deckFingerMargin  // 170mm
+totalDepth = 2 * wall + deckDepth               // 182mm
 
-// Base: hub-topp ca. wall+3+usbHubH = 29 mm fra bunn; ~9 mm ekstra til USB-kabler + sikker margin.
-// (Tykkere hub / rotete kabler → øk baseHeight i KCL.)
-baseHeight = 38
-// Frontbånd (navn + LED): så lavt som 5 mm LED + diffuser tillater – mindre «tomrom» under puta.
-nameTagHeight = 8
-ledStripHeight = 8
-deckZStart = baseHeight + nameTagHeight + ledStripHeight
+// === HØYDER ===
+baseHeight = 38        // Plass til USB-hub (23mm) + kabler + margin
+nameTagHeight = 8      // Sone for navneskilt (vinyl)
+ledStripHeight = 8     // Sone for LED + diffuser
+deckZStart = baseHeight + nameTagHeight + ledStripHeight  // 54mm
 
-// 3 mm = innkjøpsliste (MDF). Dekk ~408×170 mm – kort spenn i begge retninger; tykkere ved behov.
-deckMdf = 3
-foamThickness = 5
-feltThickness = 1
-deckPackThickness = deckMdf + foamThickness + feltThickness
+// === TELEFONFLATE ===
+deckMdf = 6            // 6mm MDF
+foamThickness = 10     // 10mm polyeterskum – mykere enn 5mm
+surfaceThickness = 2   // 2mm kunstlær
+deckPackThickness = deckMdf + foamThickness + surfaceThickness  // 18mm totalt
 
-// Målområde avtalt: **10–12°**; modellen bruker **11°** rundt global X (se puta under).
-// **Ingen toppplate i CAD** – åpen kasse (Tesla-åpen flate). Vegger stopper rett over høyeste punkt på filt + liten luft.
-deckTiltSin11 = 0.19105
-deckTiltCos11 = 0.98163
-tiltDeckTopZ = deckZStart + deckDepth * deckTiltSin11 + deckPackThickness * deckTiltCos11
-// Øverste filt foran (ved hengsel / Y = deckY0) – samme rotasjon som puta.
-tiltDeckFrontTopZ = deckZStart + deckPackThickness * deckTiltCos11
+// === HELLING 11° (Tesla-stil, bakre kant opp) ===
+deckTiltDeg = 11
+deckTiltSin = 0.19081
+deckTiltCos = 0.98163
+
+// Rå dybde kompensert for cos(11°)-forkortning, slik at bakkant treffer bakveggen etter rotasjon
+deckRawDepth = (deckDepth + deckPackThickness * deckTiltSin) / deckTiltCos
+
+tiltDeckTopZ = deckZStart + deckDepth * deckTiltSin + deckPackThickness * deckTiltCos
+tiltDeckFrontTopZ = deckZStart + deckPackThickness * deckTiltCos
 topRimClearance = 2
 stackTop = tiltDeckTopZ + topRimClearance
 totalHeight = stackTop
-// Sidevegg: toppkant foran (ytre front Y = −totalDepth/2) = parallell medfilt + luft, ikke flat horisontal kant.
-sideWallTopZFrontOuter = tiltDeckFrontTopZ + topRimClearance - wall * deckTiltSin11
 
-// Vertikal «kake»: bunnplate → elektronikk → hylle → luftrom → skrå puta; **åpen topp** (ingen horisontal lokk i modellen).
+// Forenklet sidevegger: rett diagonal fra front til bak
+frontTopZ = tiltDeckFrontTopZ + topRimClearance
 
+// === STØTTELISTER OG HJØRNELISTER ===
+supportListSize = 10   // 10x10mm trelister for å bære dekket
+cornerBlockSize = 15   // 15x15mm hjørnelister for styrke
+supportListZ = deckZStart - supportListSize     // 44mm fra bunn
+
+// Hjørnelistene bak må IKKE stikke over sidevegg-diagonalen.
+// Beregn vegghøyde ved forkant av bakre hjørnelist (laveste punkt):
+backCornerExtrude = stackTop - wall - (wall + cornerBlockSize) / totalDepth * (stackTop - frontTopZ)
+
+// === POSISJONER ===
 deckLeftX = -totalWidth / 2 + wall + deckInsetX
 deckY0 = -totalDepth / 2 + wall
 bbX0 = -totalWidth / 2 + wall + 4
 bbY0 = -totalDepth / 2 + wall
 
-// Senter langs X for plass 0..4 (navn, LED, IR, kabelhull)
+// Senter langs X for plass 0..4
 cx0 = deckLeftX + phoneSpanX / 2
 cx1 = cx0 + slotPitchX
 cx2 = cx1 + slotPitchX
 cx3 = cx2 + slotPitchX
 cx4 = cx3 + slotPitchX
 
-// Felles pivot for skrå puta: midt på **fremre** kant av MDF (Y = deckY0, bunn Z = deckZStart).
-// Viktig: **IKKE** `pitch` alene – i KCL kan det gi helling langs X (feil). Telefoner ligger med
-// **langside mot +Y** og **smalside langs X**; Tesla-helling = **bakre kant opp** ⇒ rotasjon
-// rundt **global +X** (hengsel = hele fremskanten, parallell med raden – ikke «lengderetning» på telefon).
+// Pivot for skrå puta (fremre kant)
 deckPivotX = deckLeftX + deckW / 2
 deckPivotY = deckY0
 deckPivotZ = deckZStart
 
+// === KOMPONENTMÅL ===
 ledDiameter = 5
 sensorWidth = 32
 sensorHeight = 14
 sensorModuleDepth = 8
-oledPcbW = 27
-oledPcbL = 27
+oledWindowW = 27
+oledWindowH = 19
 oledPcbH = 10
 resistorAxialLen = 6.3
 resistorBodyDia = 2.3
@@ -101,15 +116,15 @@ usbHubW = 100
 usbHubD = 50
 usbHubH = 23
 cableHoleDia = 15
-ventHoleDia = 10
-nameTagW = 80
-nameTagPlateH = 6
-ledDiffuserZ = 2
-ledDiffuserH = 10
+ventHoleDia = 12
+irWindowDia = 12
+
+ledDiffuserW = 380
+ledDiffuserH = 6
 nameY = -totalDepth / 2 - 0.5
 
 // ============================================================
-// 1. BUNNPLATE – MDF
+// 1. BUNNPLATE – 6mm MDF, 424 x 182 mm
 // ============================================================
 bunnplate = startSketchOn(XY)
   |> startProfile(at = [-totalWidth / 2, -totalDepth / 2])
@@ -121,17 +136,14 @@ bunnplate = startSketchOn(XY)
   |> appearance(color = "#c8b8a8", opacity = 100)
 
 // ============================================================
-// 2–4. SIDEVEGGER + BAKVEGG
-// Sidevegger: profil i YZ, ekstrudert langs X – **skrå topp** (11° i YZ) som følger puta,
-// horisontal siste `wall` mm mot bak (møter bakvegg @ stackTop).
+// 2–3. SIDEVEGGER – 6mm MDF, forenklet profil
+// Rett diagonal fra frontTopZ (~74mm) til stackTop (~106mm)
 // ============================================================
 venstreSide = startSketchOn(offsetPlane(YZ, offset = -totalWidth / 2))
   |> startProfile(at = [-totalDepth / 2, 0])
   |> line(endAbsolute = [totalDepth / 2, 0])
   |> line(endAbsolute = [totalDepth / 2, stackTop])
-  |> line(endAbsolute = [totalDepth / 2 - wall, stackTop])
-  |> line(endAbsolute = [deckY0, tiltDeckFrontTopZ + topRimClearance])
-  |> line(endAbsolute = [-totalDepth / 2, sideWallTopZFrontOuter])
+  |> line(endAbsolute = [-totalDepth / 2, frontTopZ])
   |> close()
   |> extrude(length = wall)
   |> appearance(color = "#d7c4b2", opacity = 55)
@@ -140,24 +152,26 @@ hoyreSide = startSketchOn(offsetPlane(YZ, offset = totalWidth / 2 - wall))
   |> startProfile(at = [-totalDepth / 2, 0])
   |> line(endAbsolute = [totalDepth / 2, 0])
   |> line(endAbsolute = [totalDepth / 2, stackTop])
-  |> line(endAbsolute = [totalDepth / 2 - wall, stackTop])
-  |> line(endAbsolute = [deckY0, tiltDeckFrontTopZ + topRimClearance])
-  |> line(endAbsolute = [-totalDepth / 2, sideWallTopZFrontOuter])
+  |> line(endAbsolute = [-totalDepth / 2, frontTopZ])
   |> close()
   |> extrude(length = wall)
   |> appearance(color = "#d7c4b2", opacity = 55)
 
+// ============================================================
+// 4. BAKVEGG – 6mm MDF, 412 x 106 mm (mellom sidevegger)
+// 2x ventilasjonshull Ø12mm
+// ============================================================
 bakveggBlank = startSketchOn(XY)
-  |> startProfile(at = [-totalWidth / 2, totalDepth / 2 - wall])
-  |> xLine(length = totalWidth)
+  |> startProfile(at = [-totalWidth / 2 + wall, totalDepth / 2 - wall])
+  |> xLine(length = totalWidth - 2 * wall)
   |> yLine(length = wall)
-  |> xLine(length = -totalWidth)
+  |> xLine(length = -(totalWidth - 2 * wall))
   |> close()
   |> extrude(length = totalHeight)
 
 ventZ = baseHeight * 0.55
-ventX1 = -totalWidth / 2 + wall + 35
-ventX2 = -totalWidth / 2 + wall + 55
+ventX1 = -totalWidth / 2 + wall + 40
+ventX2 = totalWidth / 2 - wall - 40
 ventCut1 = startSketchOn(offsetPlane(XZ, offset = totalDepth / 2 - wall))
   |> circle(center = [ventX1, ventZ], radius = ventHoleDia / 2)
   |> extrude(length = wall + 3)
@@ -165,32 +179,26 @@ ventCut2 = startSketchOn(offsetPlane(XZ, offset = totalDepth / 2 - wall))
   |> circle(center = [ventX2, ventZ], radius = ventHoleDia / 2)
   |> extrude(length = wall + 3)
 
-bakvegg = subtract(bakveggBlank, tools=[union([ventCut1, ventCut2])])
+bakvegg = subtract(bakveggBlank, tools = [union([ventCut1, ventCut2])])
   |> appearance(color = "#d7c4b2", opacity = 50)
 
 // ============================================================
-// 5–6. FRONTPANEL (navn + LED-felt)
+// 5. FRONTPANEL – 6mm MDF, 412 x ~74mm (mellom sidevegger)
+// Flukt med sideveggene i front. Dekket sitter nedfelt bak denne.
+// OLED-hull (27x19mm) i nedre halvdel, LED-diffuser (380x6mm) i midten.
 // ============================================================
-frontNedre = startSketchOn(XY)
-  |> startProfile(at = [-totalWidth / 2, -totalDepth / 2])
-  |> xLine(length = totalWidth)
+frontPanel = startSketchOn(XY)
+  |> startProfile(at = [-totalWidth / 2 + wall, -totalDepth / 2])
+  |> xLine(length = totalWidth - 2 * wall)
   |> yLine(length = wall)
-  |> xLine(length = -totalWidth)
+  |> xLine(length = -(totalWidth - 2 * wall))
   |> close()
-  |> extrude(length = baseHeight + nameTagHeight)
+  |> extrude(length = frontTopZ)
   |> appearance(color = "#f2ebe4", opacity = 100)
 
-frontLedFelt = startSketchOn(offsetPlane(XY, offset = baseHeight + nameTagHeight))
-  |> startProfile(at = [-totalWidth / 2, -totalDepth / 2])
-  |> xLine(length = totalWidth)
-  |> yLine(length = wall)
-  |> xLine(length = -totalWidth)
-  |> close()
-  |> extrude(length = ledStripHeight)
-  |> appearance(color = "#cfe8ff", opacity = 45)
-
 // ============================================================
-// 7. ELEKTRONIKKHYLLE (kabelhull = subtract, ikke løse sylindre)
+// 7. ELEKTRONIKKHYLLE – 6mm MDF, 412 x 170 mm
+// 5x kabelhull Ø15mm
 // ============================================================
 shelfBlank = startSketchOn(offsetPlane(XY, offset = baseHeight))
   |> startProfile(at = [-totalWidth / 2 + wall, -totalDepth / 2 + wall])
@@ -221,119 +229,111 @@ cableCut5 = startSketchOn(offsetPlane(XY, offset = cableCutZ))
   |> circle(center = [cx4, holeY], radius = ch)
   |> extrude(length = cableCutLen)
 
-shelf = subtract(shelfBlank, tools=[union([cableCut1, cableCut2, cableCut3, cableCut4, cableCut5])])
+shelf = subtract(shelfBlank, tools = [union([cableCut1, cableCut2, cableCut3, cableCut4, cableCut5])])
   |> appearance(color = "#a89888", opacity = 90)
 
 // ============================================================
-// 9. ÉN ÅPEN DEKKFLATE: MDF + polyeter + filt, **skråstilt** (10–12°, her 11°)
-// Tre **forskjellige farger** (byggerekkefølge nedenfra → opp). Samme pivot for alle tre lag.
-// Bak skal opp mot +Y; ved motsatt i viewer: bruk `angle = -11deg` overalt her.
+// 8. HJØRNELISTER – 15x15mm trelister (4 stk vertikalt)
 // ============================================================
-deckMdfRaw = startSketchOn(offsetPlane(XY, offset = deckZStart))
-  |> startProfile(at = [deckLeftX, deckY0])
-  |> xLine(length = deckW)
-  |> yLine(length = deckDepth)
-  |> xLine(length = -deckW)
+cornerFrontLeft = startSketchOn(offsetPlane(XY, offset = wall))
+  |> startProfile(at = [-totalWidth / 2 + wall, -totalDepth / 2 + wall])
+  |> xLine(length = cornerBlockSize)
+  |> yLine(length = cornerBlockSize)
+  |> xLine(length = -cornerBlockSize)
   |> close()
-  |> extrude(length = deckMdf)
+  |> extrude(length = frontTopZ - wall)
+  |> appearance(color = "#deb887", opacity = 80)
 
-deckFoamRaw = startSketchOn(offsetPlane(XY, offset = deckZStart + deckMdf))
-  |> startProfile(at = [deckLeftX, deckY0])
-  |> xLine(length = deckW)
-  |> yLine(length = deckDepth)
-  |> xLine(length = -deckW)
+cornerFrontRight = startSketchOn(offsetPlane(XY, offset = wall))
+  |> startProfile(at = [totalWidth / 2 - wall - cornerBlockSize, -totalDepth / 2 + wall])
+  |> xLine(length = cornerBlockSize)
+  |> yLine(length = cornerBlockSize)
+  |> xLine(length = -cornerBlockSize)
   |> close()
-  |> extrude(length = foamThickness)
+  |> extrude(length = frontTopZ - wall)
+  |> appearance(color = "#deb887", opacity = 80)
 
-deckFeltRaw = startSketchOn(offsetPlane(XY, offset = deckZStart + deckMdf + foamThickness))
-  |> startProfile(at = [deckLeftX, deckY0])
-  |> xLine(length = deckW)
-  |> yLine(length = deckDepth)
-  |> xLine(length = -deckW)
+cornerBackLeft = startSketchOn(offsetPlane(XY, offset = wall))
+  |> startProfile(at = [-totalWidth / 2 + wall, totalDepth / 2 - wall - cornerBlockSize])
+  |> xLine(length = cornerBlockSize)
+  |> yLine(length = cornerBlockSize)
+  |> xLine(length = -cornerBlockSize)
   |> close()
-  |> extrude(length = feltThickness)
+  |> extrude(length = backCornerExtrude)
+  |> appearance(color = "#deb887", opacity = 80)
 
-openDeckMdf = deckMdfRaw
+cornerBackRight = startSketchOn(offsetPlane(XY, offset = wall))
+  |> startProfile(at = [totalWidth / 2 - wall - cornerBlockSize, totalDepth / 2 - wall - cornerBlockSize])
+  |> xLine(length = cornerBlockSize)
+  |> yLine(length = cornerBlockSize)
+  |> xLine(length = -cornerBlockSize)
+  |> close()
+  |> extrude(length = backCornerExtrude)
+  |> appearance(color = "#deb887", opacity = 80)
+
+// ============================================================
+// 9. STØTTELISTER – 10x10mm trelister for dekket
+// ============================================================
+supportLeft = startSketchOn(offsetPlane(XY, offset = supportListZ))
+  |> startProfile(at = [-totalWidth / 2 + wall, deckY0])
+  |> xLine(length = supportListSize)
+  |> yLine(length = deckDepth)
+  |> xLine(length = -supportListSize)
+  |> close()
+  |> extrude(length = supportListSize)
+  |> appearance(color = "#deb887", opacity = 80)
+
+supportRight = startSketchOn(offsetPlane(XY, offset = supportListZ))
+  |> startProfile(at = [totalWidth / 2 - wall - supportListSize, deckY0])
+  |> xLine(length = supportListSize)
+  |> yLine(length = deckDepth)
+  |> xLine(length = -supportListSize)
+  |> close()
+  |> extrude(length = supportListSize)
+  |> appearance(color = "#deb887", opacity = 80)
+
+supportBack = startSketchOn(offsetPlane(XY, offset = supportListZ))
+  |> startProfile(at = [-totalWidth / 2 + wall + supportListSize, totalDepth / 2 - wall - supportListSize])
+  |> xLine(length = totalWidth - 2 * wall - 2 * supportListSize)
+  |> yLine(length = supportListSize)
+  |> xLine(length = -(totalWidth - 2 * wall - 2 * supportListSize))
+  |> close()
+  |> extrude(length = supportListSize)
+  |> appearance(color = "#deb887", opacity = 80)
+
+// ============================================================
+// 10. TELEFONFLATE – Enhetlig dekk (MDF 6mm + Skum 10mm + Kunstlær 2mm)
+// Kunstlær wrapper rundt kantene → fyller til innervegger (innerW)
+// Skråstilt 11°
+// ============================================================
+deckRaw = startSketchOn(offsetPlane(XY, offset = deckZStart))
+  |> startProfile(at = [-innerW / 2, deckY0])
+  |> xLine(length = innerW)
+  |> yLine(length = deckRawDepth)
+  |> xLine(length = -innerW)
+  |> close()
+  |> extrude(length = deckPackThickness)
+
+openDeck = deckRaw
   |> translate(x = -deckPivotX, y = -deckPivotY, z = -deckPivotZ, global = true)
   |> rotate(axis = [1, 0, 0], angle = 11deg, global = true)
   |> translate(x = deckPivotX, y = deckPivotY, z = deckPivotZ, global = true)
-  |> appearance(color = "#b5a08e", opacity = 100)
-
-openDeckFoam = deckFoamRaw
-  |> translate(x = -deckPivotX, y = -deckPivotY, z = -deckPivotZ, global = true)
-  |> rotate(axis = [1, 0, 0], angle = 11deg, global = true)
-  |> translate(x = deckPivotX, y = deckPivotY, z = deckPivotZ, global = true)
-  |> appearance(color = "#c5c5c5", opacity = 100)
-
-openDeckFelt = deckFeltRaw
-  |> translate(x = -deckPivotX, y = -deckPivotY, z = -deckPivotZ, global = true)
-  |> rotate(axis = [1, 0, 0], angle = 11deg, global = true)
-  |> translate(x = deckPivotX, y = deckPivotY, z = deckPivotZ, global = true)
-  |> appearance(color = "#8a8a8a", opacity = 100)
+  |> appearance(color = "#3d3d3d", opacity = 100)
 
 // ============================================================
-// 10. Navneskilt (5 stk – kun merking, ikke skiller på topp)
+// 11. LED-DIFFUSER – Opalhvit akryl 4mm
 // ============================================================
-n1 = startSketchOn(offsetPlane(XY, offset = baseHeight + 2))
-  |> startProfile(at = [cx0 - nameTagW / 2, nameY])
-  |> xLine(length = nameTagW)
-  |> yLine(length = 3)
-  |> xLine(length = -nameTagW)
-  |> close()
-  |> extrude(length = nameTagPlateH)
-  |> appearance(color = "#FFD93D", opacity = 100)
-
-n2 = startSketchOn(offsetPlane(XY, offset = baseHeight + 2))
-  |> startProfile(at = [cx1 - nameTagW / 2, nameY])
-  |> xLine(length = nameTagW)
-  |> yLine(length = 3)
-  |> xLine(length = -nameTagW)
-  |> close()
-  |> extrude(length = nameTagPlateH)
-  |> appearance(color = "#FFD93D", opacity = 100)
-
-n3 = startSketchOn(offsetPlane(XY, offset = baseHeight + 2))
-  |> startProfile(at = [cx2 - nameTagW / 2, nameY])
-  |> xLine(length = nameTagW)
-  |> yLine(length = 3)
-  |> xLine(length = -nameTagW)
-  |> close()
-  |> extrude(length = nameTagPlateH)
-  |> appearance(color = "#FFD93D", opacity = 100)
-
-n4 = startSketchOn(offsetPlane(XY, offset = baseHeight + 2))
-  |> startProfile(at = [cx3 - nameTagW / 2, nameY])
-  |> xLine(length = nameTagW)
-  |> yLine(length = 3)
-  |> xLine(length = -nameTagW)
-  |> close()
-  |> extrude(length = nameTagPlateH)
-  |> appearance(color = "#FFD93D", opacity = 100)
-
-n5 = startSketchOn(offsetPlane(XY, offset = baseHeight + 2))
-  |> startProfile(at = [cx4 - nameTagW / 2, nameY])
-  |> xLine(length = nameTagW)
-  |> yLine(length = 3)
-  |> xLine(length = -nameTagW)
-  |> close()
-  |> extrude(length = nameTagPlateH)
-  |> appearance(color = "#FFD93D", opacity = 100)
-
-// ============================================================
-// 12. Opalhvit akryl-diffuser
-// ============================================================
-ledDiffuserWidth = totalWidth - 2 * wall - 16
-ledDiffuser = startSketchOn(offsetPlane(XY, offset = baseHeight + nameTagHeight + ledStripHeight - ledDiffuserZ))
-  |> startProfile(at = [-ledDiffuserWidth / 2, nameY])
-  |> xLine(length = ledDiffuserWidth)
+ledDiffuser = startSketchOn(offsetPlane(XY, offset = baseHeight + nameTagHeight + ledStripHeight / 2 - ledDiffuserH / 2))
+  |> startProfile(at = [-ledDiffuserW / 2, nameY])
+  |> xLine(length = ledDiffuserW)
   |> yLine(length = wall + 2)
-  |> xLine(length = -ledDiffuserWidth)
+  |> xLine(length = -ledDiffuserW)
   |> close()
   |> extrude(length = ledDiffuserH)
   |> appearance(color = "#eef6fc", opacity = 58)
 
 // ============================================================
-// 12. LED (5 stk – én per sone / familiemedlem)
+// 12. LED (5 stk)
 // ============================================================
 ledRadius = ledDiameter / 2
 ledZ = baseHeight + nameTagHeight + ledStripHeight / 2
@@ -365,7 +365,7 @@ led5 = startSketchOn(offsetPlane(XY, offset = ledZ))
   |> appearance(color = "#00c853", opacity = 100)
 
 // ============================================================
-// 13. IR FC-51 (5 stk) – under MDF, **samme helling som puta** (samme pivot + rotasjon som dekk)
+// 13. IR FC-51 SENSORER (5 stk) – under dekket, samme helling
 // ============================================================
 sensorY = deckY0 + deckDepth - sensorHeight - 5
 sensorZ = deckZStart - sensorModuleDepth
@@ -441,20 +441,20 @@ sensor5 = sensor5Raw
   |> appearance(color = "#2a2a2a", opacity = 100)
 
 // ============================================================
-// 15. OLED
+// 14. OLED – montert i hull i frontpanel (27x19mm, sentrert i nedre halvdel)
 // ============================================================
-oledZ = deckZStart - 2
+oledZ = 20
 oledFrame = startSketchOn(offsetPlane(XY, offset = oledZ))
-  |> startProfile(at = [-oledPcbW / 2, nameY])
-  |> xLine(length = oledPcbW)
+  |> startProfile(at = [-oledWindowW / 2, nameY])
+  |> xLine(length = oledWindowW)
   |> yLine(length = wall + 2)
-  |> xLine(length = -oledPcbW)
+  |> xLine(length = -oledWindowW)
   |> close()
   |> extrude(length = oledPcbH)
   |> appearance(color = "#121820", opacity = 100)
 
 // ============================================================
-// 15. Motstander 220 Ω
+// 15. MOTSTANDER 220Ω (5 stk)
 // ============================================================
 resZ = wall + breadboardHeight + 3
 r1 = startSketchOn(offsetPlane(XY, offset = resZ))
@@ -485,7 +485,7 @@ r3 = startSketchOn(offsetPlane(XY, offset = resZ))
   |> appearance(color = "#bea878", opacity = 100)
 
 r4 = startSketchOn(offsetPlane(XY, offset = resZ))
-  |> startProfile(at = [-totalWidth / 2 + wall + 60, -totalDepth / 2 + wall + 8])
+  |> startProfile(at = [bbX0 + 42, bbY0 + 6])
   |> xLine(length = resistorAxialLen)
   |> yLine(length = resistorBodyDia)
   |> xLine(length = -resistorAxialLen)
@@ -503,7 +503,7 @@ r5 = startSketchOn(offsetPlane(XY, offset = resZ))
   |> appearance(color = "#bea878", opacity = 100)
 
 // ============================================================
-// 16. Breadboard + ESP32 (foran i kassen, Y fra innerforkant)
+// 16. BREADBOARD + ESP32
 // ============================================================
 breadboard = startSketchOn(offsetPlane(XY, offset = wall))
   |> startProfile(at = [bbX0, bbY0])
@@ -524,7 +524,7 @@ esp32 = startSketchOn(offsetPlane(XY, offset = wall + breadboardHeight))
   |> appearance(color = "#1e4d8b", opacity = 100)
 
 // ============================================================
-// 17. USB-hub ved siden av breadboard langs X (Kjell – mål egen)
+// 17. USB-HUB
 // ============================================================
 usbHub = startSketchOn(offsetPlane(XY, offset = wall + 3))
   |> startProfile(at = [bbX0 + breadboardWidth + 8, bbY0])
@@ -536,18 +536,17 @@ usbHub = startSketchOn(offsetPlane(XY, offset = wall + 3))
   |> appearance(color = "#2f2f2f", opacity = 100)
 
 // ============================================================
-// MATERIALFARGER → innkjøp: docs/HARDWARE.md (tabell + lenker)
+// MATERIALREFERANSE → docs/HARDWARE.md
 // ------------------------------------------------------------
-// #b5a08e, #c8b8a8, #d7c4b2, #a89888, #e8dfd6, #f2ebe4  → MDF 3 mm
-// #FFD93D  → navn (maling / vinyl)
-// #eef6fc  → opalhvit akryl (Biltema)
-// #c5c5c5  → polyeter 5 mm (Industrisøm)
-// #8a8a8a  → selvklebende filt (Hobbykunst)
-// #00c853  → grønn LED 5 mm (elkim)
-// #2a2a2a  → IR FC-51 (elkim)
-// #bea878  → 220 Ω (elkim)
-// #f5f5f0  → breadboard (elkim)
-// #1e4d8b  → ESP32 (elkim)
-// #2f2f2f  → USB-hub (Kjell – mål egen)
-// #121820  → OLED (elkim)
+// MDF 6mm:          #c8b8a8, #d7c4b2, #a89888, #f2ebe4
+// Trelister:        #deb887 (15x15mm hjørne, 10x10mm støtte)
+// Dekk (kunstlær):  #3d3d3d (svart, enhetlig dekk inkl. MDF+skum)
+// Akryl opal:       #eef6fc
+// LED grønn:        #00c853
+// IR FC-51:         #2a2a2a
+// Motstand 220Ω:    #bea878
+// Breadboard:       #f5f5f0
+// ESP32:            #1e4d8b
+// USB-hub:          #2f2f2f
+// OLED:             #121820
 // ============================================================
